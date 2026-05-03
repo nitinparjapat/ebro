@@ -13,6 +13,7 @@ import {
   normalizeAddressBook,
   normalizeAddress,
   validateAddress,
+  validateAddressFields,
 } from "../../lib/address";
 
 const formatPrice = (amount) => `Rs. ${amount.toLocaleString("en-IN")}`;
@@ -50,7 +51,9 @@ export default function CartPage() {
   );
   const [addressFormExpanded, setAddressFormExpanded] = useState(savedAddresses.length === 0);
   const [checkoutError, setCheckoutError] = useState("");
+  const [addressErrors, setAddressErrors] = useState({});
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [confirmOrderOpen, setConfirmOrderOpen] = useState(false);
   const autoSaveTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -85,6 +88,7 @@ export default function CartPage() {
     setDeliveryAddress(address);
     setAddressFormExpanded(false);
     setCheckoutError("");
+    setAddressErrors({});
   };
 
   const handleNewAddress = () => {
@@ -99,6 +103,7 @@ export default function CartPage() {
     );
     setAddressFormExpanded(true);
     setCheckoutError("");
+    setAddressErrors({});
   };
 
   const handleEditAddress = (address) => {
@@ -106,13 +111,16 @@ export default function CartPage() {
     setDeliveryAddress(address);
     setAddressFormExpanded(true);
     setCheckoutError("");
+    setAddressErrors({});
   };
 
   const handleSaveAddress = () => {
-    const addressError = validateAddress(deliveryAddress);
+    const fieldErrors = validateAddressFields(deliveryAddress);
+    const addressError = Object.values(fieldErrors).find(Boolean) ?? "";
 
     if (addressError) {
-      setCheckoutError(addressError);
+      setAddressErrors(fieldErrors);
+      setCheckoutError("");
       return null;
     }
 
@@ -128,6 +136,7 @@ export default function CartPage() {
     }
     setAddressFormExpanded(false);
     setCheckoutError("");
+    setAddressErrors({});
     return savedAddress;
   };
 
@@ -176,20 +185,21 @@ export default function CartPage() {
       return;
     }
 
-    const addressError = validateAddress(deliveryAddress);
+    const fieldErrors = validateAddressFields(deliveryAddress);
+    const addressError = Object.values(fieldErrors).find(Boolean) ?? "";
 
     if (addressError) {
-      setCheckoutError(addressError);
+      setAddressErrors(fieldErrors);
+      setCheckoutError("");
       return;
     }
 
-    const shouldPlaceOrder = window.confirm(
-      "Confirm order placement? Press OK to place your COD order."
-    );
+    setAddressErrors({});
+    setConfirmOrderOpen(true);
+  };
 
-    if (!shouldPlaceOrder) {
-      return;
-    }
+  const handleConfirmPlaceOrder = async () => {
+    setConfirmOrderOpen(false);
 
     const savedAddress = handleSaveAddress();
 
@@ -467,6 +477,7 @@ export default function CartPage() {
                         disabled={placingOrder}
                         showLabel
                         showDefaultToggle={savedAddresses.length > 0}
+                        errors={addressErrors}
                       />
                     </div>
 
@@ -517,6 +528,33 @@ export default function CartPage() {
           </div>
         )}
       </main>
+
+      {confirmOrderOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900">Confirm Order</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Place this cash-on-delivery order now?
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmOrderOpen(false)}
+                className="rounded-xl border border-slate-300 py-2.5 text-sm font-semibold text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPlaceOrder}
+                className="rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white"
+              >
+                Yes, Place Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

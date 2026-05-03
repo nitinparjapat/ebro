@@ -48,38 +48,46 @@ export const normalizeAddressBook = (addresses = []) =>
     }));
 
 export const validateAddress = (address) => {
+  const fieldErrors = validateAddressFields(address);
+  const firstError = Object.values(fieldErrors).find(Boolean);
+  return firstError || "";
+};
+
+export const validateAddressFields = (address) => {
+  const errors = {};
+
   if (address.fullName.trim().length < 3) {
-    return "Enter the receiver's full name.";
+    errors.fullName = "Enter the receiver's full name.";
   }
 
   if (cleanMobile(address.mobile).length !== 10) {
-    return "Enter a valid 10 digit mobile number.";
+    errors.mobile = "Enter a valid 10 digit mobile number.";
   }
 
   if (
     address.alternateMobile &&
     cleanMobile(address.alternateMobile).length !== 10
   ) {
-    return "Enter a valid alternate mobile number or leave it empty.";
+    errors.alternateMobile = "Enter a valid alternate mobile number or leave it empty.";
   }
 
   if (cleanPincode(address.pincode).length !== 6) {
-    return "Enter a valid 6 digit pincode.";
+    errors.pincode = "Enter a valid 6 digit pincode.";
   }
 
   if (address.addressLine1.trim().length < 8) {
-    return "Enter house number, street, or building details.";
+    errors.addressLine1 = "Enter house number, street, or building details.";
   }
 
   if (address.city.trim().length < 2) {
-    return "Enter city.";
+    errors.city = "Enter city.";
   }
 
   if (address.state.trim().length < 2) {
-    return "Enter state.";
+    errors.state = "Enter state.";
   }
 
-  return "";
+  return errors;
 };
 
 export const formatAddressForOrder = (address) => {

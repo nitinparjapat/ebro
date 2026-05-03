@@ -13,6 +13,7 @@ export default function AddressForm({
   disabled = false,
   showLabel = false,
   showDefaultToggle = false,
+  errors = {},
 }) {
   const [pincodeLookupState, setPincodeLookupState] = useState({
     loading: false,
@@ -36,6 +37,9 @@ export default function AddressForm({
       [field]: cleaners[field] ? cleaners[field](nextValue) : nextValue,
     });
   };
+
+  const withErrorClass = (field) =>
+    `${inputClass} ${errors[field] ? "border-red-500 bg-red-50 focus:border-red-500" : ""}`;
 
   useEffect(() => {
     const pincode = cleanPincode(value.pincode ?? "");
@@ -241,8 +245,11 @@ export default function AddressForm({
               onChange={(event) => updateField("label", event.target.value)}
               disabled={disabled}
               placeholder="Home, Office, Shop"
-              className={inputClass}
+              className={withErrorClass("label")}
             />
+            {errors.label && (
+              <p className="mt-1 text-xs font-medium text-red-600">{errors.label}</p>
+            )}
           </label>
 
           {showDefaultToggle && (
@@ -270,8 +277,11 @@ export default function AddressForm({
           onChange={(event) => updateField("fullName", event.target.value)}
           disabled={disabled}
           placeholder="Receiver full name"
-          className={inputClass}
+          className={withErrorClass("fullName")}
         />
+        {errors.fullName && (
+          <p className="mt-1 text-xs font-medium text-red-600">{errors.fullName}</p>
+        )}
       </label>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -286,8 +296,11 @@ export default function AddressForm({
             onChange={(event) => updateField("mobile", event.target.value)}
             disabled={disabled}
             placeholder="10 digit mobile"
-            className={inputClass}
+            className={withErrorClass("mobile")}
           />
+          {errors.mobile && (
+            <p className="mt-1 text-xs font-medium text-red-600">{errors.mobile}</p>
+          )}
         </label>
 
         <label className="block">
@@ -303,8 +316,11 @@ export default function AddressForm({
             }
             disabled={disabled}
             placeholder="Optional"
-            className={inputClass}
+            className={withErrorClass("alternateMobile")}
           />
+          {errors.alternateMobile && (
+            <p className="mt-1 text-xs font-medium text-red-600">{errors.alternateMobile}</p>
+          )}
         </label>
       </div>
 
@@ -318,8 +334,11 @@ export default function AddressForm({
           disabled={disabled}
           rows="2"
           placeholder="House no., building, street"
-          className={`${inputClass} resize-none`}
+          className={`${withErrorClass("addressLine1")} resize-none`}
         />
+        {errors.addressLine1 && (
+          <p className="mt-1 text-xs font-medium text-red-600">{errors.addressLine1}</p>
+        )}
       </label>
 
       <label className="block">
@@ -332,8 +351,11 @@ export default function AddressForm({
           onChange={(event) => updateField("addressLine2", event.target.value)}
           disabled={disabled}
           placeholder="Area, colony, locality"
-          className={inputClass}
+          className={withErrorClass("addressLine2")}
         />
+        {errors.addressLine2 && (
+          <p className="mt-1 text-xs font-medium text-red-600">{errors.addressLine2}</p>
+        )}
       </label>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -346,8 +368,11 @@ export default function AddressForm({
             onChange={(event) => updateField("pincode", event.target.value)}
             disabled={disabled}
             placeholder="6 digit pincode"
-            className={inputClass}
+            className={withErrorClass("pincode")}
           />
+          {errors.pincode && (
+            <p className="mt-1 text-xs font-medium text-red-600">{errors.pincode}</p>
+          )}
           {pincodeLookupState.loading && (
             <p className="mt-2 text-xs font-medium text-gray-500">
               Fetching city and state...
@@ -368,8 +393,11 @@ export default function AddressForm({
             onChange={(event) => updateField("landmark", event.target.value)}
             disabled={disabled}
             placeholder="Optional"
-            className={inputClass}
+            className={withErrorClass("landmark")}
           />
+          {errors.landmark && (
+            <p className="mt-1 text-xs font-medium text-red-600">{errors.landmark}</p>
+          )}
         </label>
       </div>
 
@@ -382,8 +410,11 @@ export default function AddressForm({
             onChange={(event) => updateField("city", event.target.value)}
             disabled={disabled}
             placeholder="City"
-            className={inputClass}
+            className={withErrorClass("city")}
           />
+          {errors.city && (
+            <p className="mt-1 text-xs font-medium text-red-600">{errors.city}</p>
+          )}
         </label>
 
         <label className="block">
@@ -394,8 +425,11 @@ export default function AddressForm({
             onChange={(event) => updateField("state", event.target.value)}
             disabled={disabled}
             placeholder="State"
-            className={inputClass}
+            className={withErrorClass("state")}
           />
+          {errors.state && (
+            <p className="mt-1 text-xs font-medium text-red-600">{errors.state}</p>
+          )}
         </label>
       </div>
     </div>
