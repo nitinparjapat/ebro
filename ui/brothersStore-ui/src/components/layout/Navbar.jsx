@@ -54,8 +54,10 @@ export default function Navbar() {
   );
 
   return (
-    <div className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/92 shadow-[0_10px_24px_rgba(15,23,42,0.05)] backdrop-blur">
+    <>
       <MobileDrawer open={drawerOpen} setOpen={setDrawerOpen} />
+
+      <div className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/92 shadow-[0_10px_24px_rgba(15,23,42,0.05)] backdrop-blur">
 
       <div className="mx-auto max-w-7xl px-4 py-3 md:px-6">
         <div className="flex items-center gap-3 md:gap-5">
@@ -166,6 +168,7 @@ export default function Navbar() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
