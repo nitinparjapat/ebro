@@ -17,6 +17,10 @@ export default function AddressForm({
     loading: false,
     error: "",
   });
+  const [geoLocationState, setGeoLocationState] = useState({
+    loading: false,
+    error: "",
+  });
   const lastResolvedPincodeRef = useRef("");
 
   const updateField = (field, nextValue) => {
@@ -89,8 +93,129 @@ export default function AddressForm({
     };
   }, [onChange, value]);
 
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setGeoLocationState({
+        loading: false,
+        error: "Location is not supported in this browser.",
+      });
+      return;
+    }
+
+    setGeoLocationState({
+      loading: true,
+      error: "",
+    });
+
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const url = new URL("https://nominatim.openstreetmap.org/reverse");
+          url.searchParams.set("lat", String(coords.latitude));
+          url.searchParams.set("lon", String(coords.longitude));
+          url.searchParams.set("format", "jsonv2");
+          url.searchParams.set("addressdetails", "1");
+
+          const response = await fetch(url.toString(), {
+            headers: {
+              Accept: "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Unable to fetch your address from location.");
+          }
+
+          const data = await response.json();
+          const address = data?.address ?? {};
+          const streetLine = [
+            address.house_number,
+            address.road || address.pedestrian || address.cycleway || address.footway,
+          ]
+            .filter(Boolean)
+            .join(", ")
+            .trim();
+          const localityLine = [
+            address.suburb || address.neighbourhood,
+            address.city_district || address.county,
+          ]
+            .filter(Boolean)
+            .join(", ")
+            .trim();
+          const city =
+            address.city ||
+            address.town ||
+            address.village ||
+            address.hamlet ||
+            value.city;
+          const state = address.state || value.state;
+          const pincode = cleanPincode(address.postcode ?? value.pincode ?? "");
+
+          onChange({
+            ...value,
+            addressLine1: streetLine || value.addressLine1,
+            addressLine2: localityLine || value.addressLine2,
+            city: city ?? "",
+            state: state ?? "",
+            pincode,
+          });
+
+          setGeoLocationState({
+            loading: false,
+            error: "",
+          });
+        } catch (error) {
+          setGeoLocationState({
+            loading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Unable to fetch your address from location.",
+          });
+        }
+      },
+      (error) => {
+        let message = "Unable to access your current location.";
+
+        if (error.code === 1) {
+          message = "Location permission denied. Please allow location access.";
+        } else if (error.code === 2) {
+          message = "Location unavailable. Please try again.";
+        } else if (error.code === 3) {
+          message = "Location request timed out. Please try again.";
+        }
+
+        setGeoLocationState({
+          loading: false,
+          error: message,
+        });
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 12000,
+        maximumAge: 300000,
+      }
+    );
+  };
+
   return (
     <div className="grid gap-4">
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <button
+          type="button"
+          onClick={handleUseCurrentLocation}
+          disabled={disabled || geoLocationState.loading}
+          className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {geoLocationState.loading ? "Detecting location..." : "Use current location"}
+        </button>
+        {geoLocationState.error && (
+          <p className="mt-2 text-xs font-medium text-red-600">
+            {geoLocationState.error}
+          </p>
+        )}
+      </div>
+
       {showLabel && (
         <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
           <label className="block">
