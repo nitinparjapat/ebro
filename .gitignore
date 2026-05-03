@@ -1,0 +1,7 @@
+run-logs/
+**/.vs/
+**/bin/
+**/obj/
+ui/brothersStore-ui/node_modules/
+ui/brothersStore-ui/dist/
+ui/brothersStore-ui/.git.backup/

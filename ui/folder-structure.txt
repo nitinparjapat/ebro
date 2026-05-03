@@ -1,0 +1,61 @@
+src
+│
+├── assets
+│   ├── images
+│   └── icons
+│
+├── components
+│   ├── common
+│   │     Button.jsx
+│   │     Input.jsx
+│   │     Loader.jsx
+│   │
+│   ├── layout
+│   │     Navbar.jsx
+│   │     MobileNavbar.jsx
+│   │     Footer.jsx
+│   │
+│   ├── product
+│   │     ProductCard.jsx
+│   │     ProductGrid.jsx
+│   │     ProductImageSlider.jsx
+│   │
+│   ├── cart
+│   │     CartItem.jsx
+│   │     CartDrawer.jsx
+│   │
+│   └── filters
+│         FilterSidebar.jsx
+│
+├── pages
+│   ├── Home
+│   │     Home.jsx
+│   │
+│   ├── Products
+│   │     ProductList.jsx
+│   │     ProductDetail.jsx
+│   │
+│   ├── Cart
+│   │     CartPage.jsx
+│   │
+│   └── Checkout
+│         Checkout.jsx
+│
+├── hooks
+│     useCart.js
+│     useProducts.js
+│
+├── store
+│     cartStore.js
+│
+├── services
+│     api.js
+│
+├── routes
+│     AppRoutes.jsx
+│
+├── utils
+│     helpers.js
+│
+├── App.jsx
+└── main.jsx

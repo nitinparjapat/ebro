@@ -1,0 +1,16 @@
+OST /auth/signup
+POST /auth/send-otp
+POST /auth/verify-otp
+GET /products
+GET /products/:id
+GET /categories
+GET /cart
+POST /cart/items
+PATCH /cart/items/:productId
+DELETE /cart/items/:productId
+GET /wishlist
+POST /wishlist
+DELETE /wishlist/:productId
+GET /products/:id/reviews
+POST /products/:id/reviews
+POST /orders

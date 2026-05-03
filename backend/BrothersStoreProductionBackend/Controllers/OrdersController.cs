@@ -1,0 +1,186 @@
+using System.Security.Claims;
+using BrothersStoreApi.Data;
+using BrothersStoreApi.Entities;
+using BrothersStoreApi.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+
+namespace BrothersStoreApi.Controllers;
+
+[ApiController]
+[Route("api/orders")]
+[Authorize]
+public class OrdersController : ControllerBase
+{
+    private readonly AppDbContext db;
+    private readonly IOrderEmailNotificationService orderEmailNotificationService;
+
+    public OrdersController(AppDbContext d, IOrderEmailNotificationService orderEmailNotificationService)
+    {
+        db = d;
+        this.orderEmailNotificationService = orderEmailNotificationService;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Get([FromQuery] string? scope = null)
+    {
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            return Unauthorized();
+        }
+
+        var isAdmin = IsAdmin();
+        var query = db.Orders
+            .AsNoTracking()
+            .Include(order => order.Items)
+            .OrderByDescending(order => order.CreatedAt)
+            .AsQueryable();
+
+        if (!isAdmin || !string.Equals(scope, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(order => order.CustomerEmail == userEmail);
+        }
+
+        return Ok(await query.ToListAsync());
+    }
+
+    [HttpGet("owner")]
+    public async Task<IActionResult> GetOwnerOrders()
+    {
+        if (!IsAdmin())
+        {
+            return Forbid();
+        }
+
+        var orders = await db.Orders
+            .AsNoTracking()
+            .Include(order => order.Items)
+            .OrderByDescending(order => order.CreatedAt)
+            .ToListAsync();
+
+        return Ok(orders);
+    }
+
+    [HttpPost]
+    [EnableRateLimiting("write")]
+    public async Task<IActionResult> Create([FromBody] CreateOrderRequest request)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(userEmail))
+        {
+            return Unauthorized();
+        }
+
+        var cartItems = await (
+            from cartItem in db.CartItems
+            join product in db.Products on cartItem.ProductId equals product.Id
+            where cartItem.UserId == userId
+            select new
+            {
+                cartItem.ProductId,
+                cartItem.Quantity,
+                ProductName = product.Name,
+                product.Price,
+            }
+        ).ToListAsync();
+
+        if (cartItems.Count == 0)
+        {
+            return BadRequest(new { message = "Your cart is empty." });
+        }
+
+        var order = new Order
+        {
+            CustomerName = string.IsNullOrWhiteSpace(request.CustomerName)
+                ? userName ?? ""
+                : request.CustomerName.Trim(),
+            CustomerMobile = request.CustomerMobile?.Trim() ?? "",
+            CustomerEmail = request.CustomerEmail?.Trim() ?? userEmail,
+            ShippingAddress = request.ShippingAddress?.Trim() ?? "",
+            PaymentMethod = request.PaymentMethod?.Trim() ?? "Cash on Delivery",
+            Status = "Pending",
+            TotalAmount = cartItems.Sum(item => item.Price * item.Quantity),
+            CreatedAt = DateTime.UtcNow,
+            Items = cartItems.Select(item => new OrderItem
+            {
+                ProductId = item.ProductId,
+                ProductName = item.ProductName,
+                Price = item.Price,
+                Quantity = item.Quantity,
+            }).ToList(),
+        };
+
+        db.Orders.Add(order);
+
+        var userCartItems = await db.CartItems.Where(item => item.UserId == userId).ToListAsync();
+        if (userCartItems.Count > 0)
+        {
+            db.CartItems.RemoveRange(userCartItems);
+        }
+
+        await db.SaveChangesAsync();
+        _ = orderEmailNotificationService.SendOrderPlacedNotificationsAsync(order);
+
+        return Ok(order);
+    }
+
+    [HttpPatch("{id:int}/status")]
+    public async Task<IActionResult> Status(int id, [FromBody] OrderStatusPatchRequest request)
+    {
+        if (!IsAdmin())
+        {
+            return Forbid();
+        }
+
+        var order = await db.Orders.Include(item => item.Items).FirstOrDefaultAsync(item => item.Id == id);
+        if (order == null)
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Status))
+        {
+            return BadRequest(new { message = "Status is required." });
+        }
+
+        order.Status = request.Status.Trim();
+        if (string.Equals(order.Status, "Confirmed", StringComparison.OrdinalIgnoreCase))
+        {
+            order.ConfirmedByAdminName = User.FindFirst(ClaimTypes.Name)?.Value?.Trim() ?? "";
+            order.ConfirmedByAdminEmail = User.FindFirst(ClaimTypes.Email)?.Value?.Trim() ?? "";
+            order.ConfirmedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+
+        if (string.Equals(order.Status, "Confirmed", StringComparison.OrdinalIgnoreCase))
+        {
+            _ = orderEmailNotificationService.SendOrderConfirmedNotificationAsync(order);
+        }
+
+        return Ok(order);
+    }
+
+    private bool IsAdmin() =>
+        string.Equals(User.FindFirst(ClaimTypes.Role)?.Value, "Admin", StringComparison.OrdinalIgnoreCase);
+}
+
+public class CreateOrderRequest
+{
+    public string ShippingAddress { get; set; } = "";
+    public string PaymentMethod { get; set; } = "";
+    public string CustomerName { get; set; } = "";
+    public string CustomerMobile { get; set; } = "";
+    public string CustomerEmail { get; set; } = "";
+}
+
+public class OrderStatusPatchRequest
+{
+    public string Status { get; set; } = "";
+}

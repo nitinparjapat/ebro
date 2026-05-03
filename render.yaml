@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: brothersstore-api
+    runtime: dotnet
+    repo: .
+    rootDir: backend/BrothersStoreProductionBackend
+    buildCommand: dotnet publish -c Release -o out
+    startCommand: dotnet out/BrothersStoreApi.dll
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:10000
+      - key: Swagger__Enabled
+        value: false
+      - key: JwtSettings__Issuer
+        value: BrothersStoreApi
+      - key: JwtSettings__Audience
+        value: BrothersStoreClient
+
+  - type: static
+    name: brothersstore-ui
+    repo: .
+    rootDir: ui/brothersStore-ui
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
