@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using BrothersStoreApi.Data;
 using BrothersStoreApi.Entities;
 using BrothersStoreApi.Services;
@@ -95,12 +96,29 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = "Your cart is empty." });
         }
 
+        var customerMobile = request.CustomerMobile?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(customerMobile))
+        {
+            return BadRequest(new { message = "Mobile number is required." });
+        }
+
+        var mobileDigits = Regex.Replace(customerMobile, @"\D", "");
+        if (mobileDigits.Length != 10)
+        {
+            return BadRequest(new { message = "Enter a valid 10 digit mobile number." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ShippingAddress))
+        {
+            return BadRequest(new { message = "Shipping address is required." });
+        }
+
         var order = new Order
         {
             CustomerName = string.IsNullOrWhiteSpace(request.CustomerName)
                 ? userName ?? ""
                 : request.CustomerName.Trim(),
-            CustomerMobile = request.CustomerMobile?.Trim() ?? "",
+            CustomerMobile = mobileDigits,
             CustomerEmail = request.CustomerEmail?.Trim() ?? userEmail,
             ShippingAddress = request.ShippingAddress?.Trim() ?? "",
             PaymentMethod = request.PaymentMethod?.Trim() ?? "Cash on Delivery",

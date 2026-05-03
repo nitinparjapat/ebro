@@ -157,6 +157,9 @@ export default function CartPage() {
       const order = await placeOrder({
         shippingAddress,
         paymentMethod: "Cash on Delivery",
+        customerName: savedAddress.fullName,
+        customerMobile: savedAddress.mobile,
+        customerEmail: profile.email,
       });
 
       await refreshCart();
@@ -224,11 +227,26 @@ export default function CartPage() {
                           src={image}
                           alt={item.title}
                           className="h-24 w-24 shrink-0 rounded-lg object-cover"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => navigate(`/product/${item.id}`)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              navigate(`/product/${item.id}`);
+                            }
+                          }}
                         />
                       )}
 
                       <div className="min-w-0 flex-1">
-                        <h2 className="font-semibold text-gray-900">{item.title}</h2>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/product/${item.id}`)}
+                          className="text-left font-semibold text-gray-900 hover:underline"
+                        >
+                          {item.title}
+                        </button>
 
                         <p className="mt-1 text-sm text-gray-500">
                           Single item price: {formatPrice(item.price)}
@@ -400,7 +418,7 @@ export default function CartPage() {
                         onChange={setDeliveryAddress}
                         disabled={placingOrder}
                         showLabel
-                        showDefaultToggle
+                        showDefaultToggle={savedAddresses.length > 0}
                       />
                     </div>
 

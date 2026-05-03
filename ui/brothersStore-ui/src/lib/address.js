@@ -71,10 +71,6 @@ export const validateAddress = (address) => {
     return "Enter house number, street, or building details.";
   }
 
-  if (address.addressLine2.trim().length < 3) {
-    return "Enter area or locality.";
-  }
-
   if (address.city.trim().length < 2) {
     return "Enter city.";
   }

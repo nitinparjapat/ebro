@@ -200,7 +200,13 @@ export function OrdersProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const placeOrder = async ({ shippingAddress, paymentMethod }) => {
+  const placeOrder = async ({
+    shippingAddress,
+    paymentMethod,
+    customerName,
+    customerMobile,
+    customerEmail,
+  }) => {
     if (!ensureAuthenticated()) {
       throw new Error("Please sign in to place your order.");
     }
@@ -211,9 +217,9 @@ export function OrdersProvider({ children }) {
         {
           shippingAddress,
           paymentMethod,
-          customerName: profile.fullName || currentUser?.fullName,
-          customerMobile: profile.mobile || currentUser?.phoneNumber,
-          customerEmail: profile.email || currentUser?.email,
+          customerName: customerName || profile.fullName || currentUser?.fullName,
+          customerMobile: customerMobile || profile.mobile || currentUser?.phoneNumber,
+          customerEmail: customerEmail || profile.email || currentUser?.email,
         },
         {
           headers: createAuthHeaders(token),
