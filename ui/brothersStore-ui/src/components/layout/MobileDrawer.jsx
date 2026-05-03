@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import { FiGrid, FiHeart, FiHome, FiInfo, FiPackage } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -19,18 +20,31 @@ export default function MobileDrawer({ open, setOpen }) {
     closeDrawer();
   };
 
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   if (!open) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[100]">
       <div
         onClick={closeDrawer}
         className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
       />
 
-      <div className="absolute right-0 top-0 h-full w-full max-w-sm overflow-y-auto bg-[linear-gradient(180deg,#fffefb_0%,#f8fafc_100%)] shadow-2xl sm:max-w-md">
+      <div className="absolute right-0 top-0 h-full w-full overflow-y-auto bg-[linear-gradient(180deg,#fffefb_0%,#f8fafc_100%)] shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/80 bg-white/88 px-4 py-3 backdrop-blur">
           <img
             src="/bs_logo_hd.png"
