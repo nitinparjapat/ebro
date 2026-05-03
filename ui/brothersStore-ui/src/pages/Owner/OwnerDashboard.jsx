@@ -756,7 +756,80 @@ export default function OwnerDashboard() {
             ) : products.length === 0 ? (
               <p className="mt-5 text-sm text-gray-500">No products yet.</p>
             ) : (
-              <div className="mt-4 overflow-x-auto">
+              <>
+              <div className="mt-4 space-y-3 md:hidden">
+                {productOrderStats.map((productStat) => {
+                  const product = productStat.product;
+
+                  return (
+                    <article key={`mobile-${product.id}`} className="rounded-lg border border-gray-200 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          {product.images?.[0] && (
+                            <img
+                              src={product.images[0]}
+                              alt={product.title}
+                              className="h-12 w-12 rounded-lg object-cover"
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-gray-900">{product.title}</p>
+                            <p className="truncate text-xs text-gray-500">{product.category}</p>
+                          </div>
+                        </div>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            product.isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {product.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                          <p className="text-gray-500">Price</p>
+                          <p className="font-semibold text-gray-900">{formatPrice(product.price)}</p>
+                        </div>
+                        <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                          <p className="text-gray-500">Stock</p>
+                          <p className="font-semibold text-gray-900">{product.stock}</p>
+                        </div>
+                        <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                          <p className="text-gray-500">Orders</p>
+                          <p className="font-semibold text-gray-900">{productStat.orderCount}</p>
+                        </div>
+                        <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                          <p className="text-gray-500">Sold</p>
+                          <p className="font-semibold text-gray-900">{productStat.quantity} pcs</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEditProduct(product)}
+                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700"
+                          aria-label={`Edit ${product.title}`}
+                        >
+                          <FiEdit3 />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(product)}
+                          disabled={saving}
+                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700 disabled:opacity-60"
+                          aria-label={product.isActive ? `Deactivate ${product.title}` : `Activate ${product.title}`}
+                        >
+                          {product.isActive ? <FiToggleRight /> : <FiToggleLeft />}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[720px] border-collapse text-left text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 text-xs uppercase tracking-[0.16em] text-gray-500">
@@ -867,6 +940,7 @@ export default function OwnerDashboard() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </section>
         </div>
@@ -894,7 +968,53 @@ export default function OwnerDashboard() {
               No product orders found yet.
             </p>
           ) : (
-            <div className="mt-4 overflow-x-auto">
+            <>
+            <div className="mt-4 space-y-3 md:hidden">
+              {recentOrderLines.map(({ id, item, order }) => (
+                <article key={`mobile-order-${id}`} className="rounded-lg border border-gray-200 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">{order.code}</p>
+                      <p className="mt-1 font-semibold text-gray-900">{item.title}</p>
+                    </div>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        order.status === "Confirmed" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-gray-900">{order.customerName}</p>
+                  {order.customerEmail && <p className="text-xs text-gray-500">{order.customerEmail}</p>}
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                      <p className="text-gray-500">Qty</p>
+                      <p className="font-semibold text-gray-900">{item.quantity}</p>
+                    </div>
+                    <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                      <p className="text-gray-500">Amount</p>
+                      <p className="font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</p>
+                    </div>
+                    <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                      <p className="text-gray-500">Mobile</p>
+                      <p className="font-semibold text-gray-900">{order.customerMobile || "Not provided"}</p>
+                    </div>
+                  </div>
+                  {order.status !== "Confirmed" && (
+                    <button
+                      type="button"
+                      onClick={() => handleConfirmOrder(order)}
+                      className="mt-3 w-full rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white"
+                    >
+                      Confirm
+                    </button>
+                  )}
+                </article>
+              ))}
+            </div>
+
+            <div className="mt-4 hidden overflow-x-auto md:block">
               <table className="w-full min-w-[820px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-xs uppercase tracking-[0.16em] text-gray-500">
@@ -977,6 +1097,7 @@ export default function OwnerDashboard() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </section>
 
