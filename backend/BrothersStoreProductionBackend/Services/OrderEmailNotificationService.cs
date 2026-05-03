@@ -44,7 +44,9 @@ public sealed class OrderEmailNotificationService : IOrderEmailNotificationServi
             BuildCustomerPlacedBody(order));
 
         var adminRecipients = adminOptions.Recipients
-            .Where(email => !string.IsNullOrWhiteSpace(email))
+            .Concat((adminOptions.RecipientsCsv ?? "")
+                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            .Where(email => !string.IsNullOrWhiteSpace(email) && email.Contains('@'))
             .Select(email => email.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -83,9 +85,15 @@ public sealed class OrderEmailNotificationService : IOrderEmailNotificationServi
         }
 
         if (string.IsNullOrWhiteSpace(smtpOptions.Host) ||
-            string.IsNullOrWhiteSpace(smtpOptions.FromEmail))
+            string.IsNullOrWhiteSpace(GetSenderEmail()))
         {
-            logger.LogWarning("SMTP is enabled, but Host or FromEmail is missing. Email notifications were skipped.");
+            logger.LogWarning("SMTP is enabled, but Host or sender email is missing. Email notifications were skipped.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(smtpOptions.Username) || string.IsNullOrWhiteSpace(smtpOptions.Password))
+        {
+            logger.LogWarning("SMTP is enabled, but Username or Password is missing. Email notifications were skipped.");
             return false;
         }
 
@@ -109,7 +117,7 @@ public sealed class OrderEmailNotificationService : IOrderEmailNotificationServi
         {
             using var message = new MailMessage
             {
-                From = new MailAddress(smtpOptions.FromEmail, smtpOptions.FromName),
+                From = new MailAddress(GetSenderEmail(), smtpOptions.FromName),
                 Subject = subject,
                 Body = htmlBody,
                 IsBodyHtml = true,
@@ -257,6 +265,21 @@ public sealed class OrderEmailNotificationService : IOrderEmailNotificationServi
         </div>
         """;
     }
+
+    private string GetSenderEmail()
+    {
+        if (!string.IsNullOrWhiteSpace(smtpOptions.FromEmail))
+        {
+            return smtpOptions.FromEmail.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(smtpOptions.Username) && smtpOptions.Username.Contains('@'))
+        {
+            return smtpOptions.Username.Trim();
+        }
+
+        return "";
+    }
 }
 
 public sealed class SmtpOptions
@@ -274,6 +297,7 @@ public sealed class SmtpOptions
 public sealed class AdminNotificationOptions
 {
     public List<string> Recipients { get; set; } = new();
+    public string RecipientsCsv { get; set; } = "";
 }
 
 public sealed class PublicSiteOptions
