@@ -1,0 +1,204 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #111111;
+  --color-accent: #c9a227;
+}
+
+@keyframes codButtonGlow {
+  0%,
+  100% {
+    box-shadow: 0 10px 24px rgba(22, 163, 74, 0.25);
+  }
+  50% {
+    box-shadow: 0 14px 30px rgba(34, 197, 94, 0.35);
+  }
+}
+
+@keyframes codButtonShimmer {
+  0% {
+    transform: translateX(-140%) skewX(-22deg);
+  }
+  100% {
+    transform: translateX(320%) skewX(-22deg);
+  }
+}
+
+@keyframes codButtonSparkle {
+  0%,
+  100% {
+    opacity: 0.12;
+    transform: translate3d(0, 0, 0) scale(0.3) rotate(0deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translate3d(
+        calc(var(--spark-x) * 0.45),
+        calc(var(--spark-y) * 0.45),
+        0
+      )
+      scale(1.7) rotate(14deg);
+  }
+  42% {
+    opacity: 0.6;
+    transform: translate3d(var(--spark-x), var(--spark-y), 0) scale(0.92)
+      rotate(-12deg);
+  }
+  68% {
+    opacity: 0.95;
+    transform: translate3d(
+        calc(var(--spark-x) * -0.35),
+        calc(var(--spark-y) * -0.25),
+        0
+      )
+      scale(1.25) rotate(10deg);
+  }
+}
+
+@keyframes codButtonAura {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.58;
+    transform: scale(1.08);
+  }
+}
+
+.cod-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(135deg, #0f9f5b 0%, #16a34a 52%, #22c55e 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.25);
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+  animation: codButtonGlow 2.6s ease-in-out infinite;
+}
+
+.cod-button:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.08);
+}
+
+.cod-button:active {
+  transform: translateY(0);
+}
+
+.cod-button::before {
+  content: "";
+  position: absolute;
+  inset: -30% auto -30% -22%;
+  width: 34%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  transform: translateX(-140%) skewX(-22deg);
+  animation: codButtonShimmer 3s linear infinite;
+  pointer-events: none;
+}
+
+.cod-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.22), transparent 16%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), transparent 35%),
+    radial-gradient(circle at 82% 70%, rgba(255, 255, 255, 0.18), transparent 14%);
+  animation: codButtonAura 2.1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.cod-button__label,
+.cod-button__spark {
+  position: relative;
+  z-index: 1;
+}
+
+.cod-button__spark {
+  --spark-x: 0.2rem;
+  --spark-y: -0.18rem;
+  position: absolute;
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  clip-path: polygon(
+    50% 0%,
+    62% 38%,
+    100% 50%,
+    62% 62%,
+    50% 100%,
+    38% 62%,
+    0% 50%,
+    38% 38%
+  );
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 0.75),
+    0 0 30px rgba(187, 247, 208, 0.55);
+  animation: codButtonSparkle 1.9s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.cod-button__spark::before,
+.cod-button__spark::after {
+  content: "";
+  position: absolute;
+  inset: 50%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  transform: translate(-50%, -50%);
+}
+
+.cod-button__spark::before {
+  width: 0.1rem;
+  height: 1rem;
+}
+
+.cod-button__spark::after {
+  width: 1rem;
+  height: 0.1rem;
+}
+
+.cod-button__spark--left {
+  --spark-x: 0.24rem;
+  --spark-y: -0.2rem;
+  top: 0.55rem;
+  left: 0.8rem;
+}
+
+.cod-button__spark--center {
+  --spark-x: -0.16rem;
+  --spark-y: 0.2rem;
+  top: 0.45rem;
+  right: 2.45rem;
+  width: 0.38rem;
+  height: 0.38rem;
+  animation-delay: 0.45s;
+}
+
+.cod-button__spark--right {
+  --spark-x: -0.24rem;
+  --spark-y: -0.16rem;
+  right: 0.9rem;
+  bottom: 0.55rem;
+  width: 0.46rem;
+  height: 0.46rem;
+  animation-delay: 0.8s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cod-button,
+  .cod-button::before,
+  .cod-button::after,
+  .cod-button__spark {
+    animation: none;
+  }
+}
