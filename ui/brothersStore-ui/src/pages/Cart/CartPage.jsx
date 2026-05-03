@@ -183,6 +183,14 @@ export default function CartPage() {
       return;
     }
 
+    const shouldPlaceOrder = window.confirm(
+      "Confirm order placement? Press OK to place your COD order."
+    );
+
+    if (!shouldPlaceOrder) {
+      return;
+    }
+
     const savedAddress = handleSaveAddress();
 
     if (!savedAddress) {

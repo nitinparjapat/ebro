@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaHeart } from "react-icons/fa";
+import { FiMinus, FiPlus } from "react-icons/fi";
 
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
@@ -8,12 +9,14 @@ import Rating from "../common/Rating";
 
 function ProductCard({ product }) {
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { cart, addToCart, decreaseQuantity } = useCart();
   const { wishlist, toggleWishlist } = useWishlist();
 
   const isWishlisted = wishlist.find((item) => item.id === product.id);
   const image = product.images?.[0];
   const isOutOfStock = product.stock <= 0;
+  const cartItem = cart.find((item) => item.id === product.id);
+  const cartQuantity = cartItem?.quantity ?? 0;
 
   const handleAddToCart = async () => {
     try {
@@ -63,10 +66,10 @@ function ProductCard({ product }) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/35 to-transparent" />
       </div>
 
-      <div className="p-4 sm:p-5">
+      <div className="p-3.5 sm:p-5">
         <h3
           onClick={() => navigate(`/product/${product.id}`)}
-          className="line-clamp-2 cursor-pointer text-base font-bold leading-snug text-slate-900 hover:underline"
+          className="line-clamp-2 cursor-pointer text-[1.05rem] font-bold leading-snug text-slate-900 hover:underline sm:text-base"
         >
           {product.title}
         </h3>
@@ -76,7 +79,7 @@ function ProductCard({ product }) {
         <Rating rating={product.rating} />
 
         <div className="mt-1 flex items-center gap-2">
-          <span className="text-lg font-black text-slate-900">Rs. {product.price.toLocaleString("en-IN")}</span>
+          <span className="text-[1.65rem] font-black leading-none text-slate-900 sm:text-lg">Rs. {product.price.toLocaleString("en-IN")}</span>
 
           <span className="text-sm text-gray-400 line-through">
             Rs. {product.oldPrice.toLocaleString("en-IN")}
@@ -87,21 +90,46 @@ function ProductCard({ product }) {
           {isOutOfStock ? "Out of stock" : `${product.stock} left in stock`}
         </p>
 
-        <div className="mt-5 grid gap-2.5">
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={isOutOfStock}
-            className="w-full rounded-xl bg-slate-950 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-gray-400"
-          >
-            Add to Cart
-          </button>
+        <div className="mt-4 grid gap-2">
+          {cartQuantity > 0 ? (
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5">
+              <button
+                type="button"
+                onClick={() => decreaseQuantity(product.id).catch((error) => window.alert(error.message))}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800"
+                aria-label={`Decrease ${product.title} quantity`}
+              >
+                <FiMinus />
+              </button>
+              <span className="min-w-8 text-center text-base font-bold text-slate-900">
+                {cartQuantity}
+              </span>
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label={`Increase ${product.title} quantity`}
+              >
+                <FiPlus />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={isOutOfStock}
+              className="w-full rounded-xl bg-slate-950 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            >
+              Add to Cart
+            </button>
+          )}
 
           <button
             type="button"
             onClick={handleBuyNow}
             disabled={isOutOfStock}
-            className="cod-button w-full rounded-xl py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+            className="cod-button w-full rounded-xl py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
           >
             <span
               aria-hidden="true"
