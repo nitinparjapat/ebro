@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiChevronUp, FiEdit3, FiMapPin, FiMinus, FiPlus, FiTrash2 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
@@ -51,6 +51,7 @@ export default function CartPage() {
   const [addressFormExpanded, setAddressFormExpanded] = useState(savedAddresses.length === 0);
   const [checkoutError, setCheckoutError] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
+  const autoSaveTimeoutRef = useRef(null);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -129,6 +130,45 @@ export default function CartPage() {
     setCheckoutError("");
     return savedAddress;
   };
+
+  useEffect(() => {
+    if (!addressFormExpanded || placingOrder) {
+      return;
+    }
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      const addressError = validateAddress(deliveryAddress);
+
+      if (addressError) {
+        return;
+      }
+
+      const savedAddress = saveAddress(deliveryAddress);
+      setSelectedAddressId(savedAddress.id);
+      setDeliveryAddress(savedAddress);
+      if (savedAddress.isDefault || savedAddresses.length === 0) {
+        setDefaultAddress(savedAddress.id);
+      }
+      setCheckoutError("");
+    }, 600);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [
+    addressFormExpanded,
+    deliveryAddress,
+    placingOrder,
+    saveAddress,
+    savedAddresses.length,
+    setDefaultAddress,
+  ]);
 
   const handlePlaceCodOrder = async () => {
     if (!isAuthenticated) {
@@ -422,14 +462,9 @@ export default function CartPage() {
                       />
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={handleSaveAddress}
-                      disabled={placingOrder}
-                      className="mt-3 w-full rounded-lg border border-gray-300 py-3 text-sm font-semibold text-gray-700 disabled:opacity-60"
-                    >
-                      Save Address
-                    </button>
+                    <p className="mt-3 text-xs font-medium text-gray-500">
+                      Address is saved automatically once details are valid.
+                    </p>
                   </>
                 )}
               </div>
