@@ -14,6 +14,7 @@ namespace BrothersStoreApi.Controllers;
 public class CartController : ControllerBase
 {
     private readonly AppDbContext db;
+    private const int MaxQuantityPerItem = 10;
 
     public CartController(AppDbContext d)
     {
@@ -47,6 +48,11 @@ public class CartController : ControllerBase
             return BadRequest(new { message = "Product and quantity are required." });
         }
 
+        if (request.Quantity > MaxQuantityPerItem)
+        {
+            return BadRequest(new { message = $"You can only add up to {MaxQuantityPerItem} quantity for a product." });
+        }
+
         var productExists = await db.Products
             .AsNoTracking()
             .AnyAsync(product => product.Id == request.ProductId);
@@ -72,6 +78,10 @@ public class CartController : ControllerBase
         else
         {
             cartItem.Quantity += request.Quantity;
+            if (cartItem.Quantity > MaxQuantityPerItem)
+            {
+                return BadRequest(new { message = $"You can only add up to {MaxQuantityPerItem} quantity for a product." });
+            }
         }
 
         await db.SaveChangesAsync();
@@ -103,6 +113,11 @@ public class CartController : ControllerBase
         }
         else
         {
+            if (request.Quantity > MaxQuantityPerItem)
+            {
+                return BadRequest(new { message = $"You can only add up to {MaxQuantityPerItem} quantity for a product." });
+            }
+
             cartItem.Quantity = request.Quantity;
         }
 

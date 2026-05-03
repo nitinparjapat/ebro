@@ -9,6 +9,15 @@ import {
 
 const CartContext = createContext(null);
 const GUEST_CART_STORAGE_KEY = "brothersStoreGuestCart";
+const MAX_QUANTITY_PER_ITEM = 10;
+
+const validateMaxQuantity = (nextQuantity) => {
+  if (nextQuantity > MAX_QUANTITY_PER_ITEM) {
+    throw new Error(
+      `You can only add up to ${MAX_QUANTITY_PER_ITEM} quantity for a product.`
+    );
+  }
+};
 
 const getStoredCart = () => {
   if (typeof window === "undefined") {
@@ -179,6 +188,7 @@ export function CartProvider({ children }) {
         const existingItem = cart.find((item) => item.id === productId);
 
         if (existingItem) {
+          validateMaxQuantity(existingItem.quantity + quantity);
           return cart.map((item) =>
             item.id === productId
               ? { ...item, quantity: item.quantity + quantity }
@@ -186,6 +196,7 @@ export function CartProvider({ children }) {
           );
         }
 
+        validateMaxQuantity(quantity);
         return [...cart, toCartItem(productOrId, quantity, cart, fallbackProduct)];
       })();
 
@@ -195,6 +206,13 @@ export function CartProvider({ children }) {
       return {
         items: nextCart,
       };
+    }
+
+    const existingItem = cart.find((item) => item.id === productId);
+    if (existingItem) {
+      validateMaxQuantity(existingItem.quantity + quantity);
+    } else {
+      validateMaxQuantity(quantity);
     }
 
     try {
@@ -229,6 +247,8 @@ export function CartProvider({ children }) {
     if (quantity <= 0) {
       return removeFromCart(productId);
     }
+
+    validateMaxQuantity(quantity);
 
     if (!token) {
       const nextCart = cart.map((item) =>

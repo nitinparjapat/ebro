@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaHeart } from "react-icons/fa";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiMinus, FiPlus } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Rating from "../../components/common/Rating";
@@ -15,7 +15,7 @@ import { useWishlist } from "../../context/WishlistContext";
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { cart, addToCart, decreaseQuantity } = useCart();
   const { loadProduct, productLookup, products } = useProducts();
   const {
     getApprovedReviewsForProduct,
@@ -110,6 +110,8 @@ export default function ProductDetails() {
 
   const currentMedia = galleryMedia[selectedImageIndex] ?? galleryMedia[0];
   const isWishlisted = wishlist.find((item) => item.id === product?.id);
+  const cartItem = cart.find((item) => item.id === product?.id);
+  const cartQuantity = cartItem?.quantity ?? 0;
 
   const approvedReviews = getApprovedReviewsForProduct(productId);
 
@@ -319,14 +321,39 @@ export default function ProductDetails() {
 
           <div className="mt-6 flex gap-3">
             <div className="grid flex-1 gap-3">
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                disabled={product.stock <= 0}
-                className="w-full rounded-lg bg-black py-3 text-white disabled:cursor-not-allowed disabled:bg-gray-400"
-              >
-                Add To Cart
-              </button>
+              {cartQuantity > 0 ? (
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-2 py-2">
+                  <button
+                    type="button"
+                    onClick={() => decreaseQuantity(product.id).catch((error) => window.alert(error.message))}
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800"
+                    aria-label={`Decrease ${product.title} quantity`}
+                  >
+                    <FiMinus />
+                  </button>
+                  <span className="min-w-10 text-center text-lg font-bold text-slate-900">
+                    {cartQuantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    disabled={product.stock <= 0 || cartQuantity >= 10}
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    aria-label={`Increase ${product.title} quantity`}
+                  >
+                    <FiPlus />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={product.stock <= 0}
+                  className="w-full rounded-lg bg-black py-3 text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+                >
+                  Add To Cart
+                </button>
+              )}
 
               <button
                 type="button"

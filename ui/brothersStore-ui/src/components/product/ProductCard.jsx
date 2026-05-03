@@ -18,6 +18,9 @@ function ProductCard({ product }) {
   const cartItem = cart.find((item) => item.id === product.id);
   const cartQuantity = cartItem?.quantity ?? 0;
 
+  const goToDetails = () => navigate(`/product/${product.id}`);
+  const stopPropagation = (event) => event.stopPropagation();
+
   const handleAddToCart = async () => {
     try {
       await addToCart(product.id, 1, {
@@ -45,7 +48,10 @@ function ProductCard({ product }) {
     <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.07)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_20px_42px_rgba(15,23,42,0.12)]">
       <button
         type="button"
-        onClick={() => toggleWishlist(product)}
+        onClick={(event) => {
+          stopPropagation(event);
+          toggleWishlist(product);
+        }}
         className={`absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/92 shadow-sm backdrop-blur transition hover:scale-105 ${
           isWishlisted ? "text-red-500" : "text-slate-300 hover:text-red-400"
         }`}
@@ -58,7 +64,7 @@ function ProductCard({ product }) {
         <img
           src={image}
           alt={product.title}
-          onClick={() => navigate(`/product/${product.id}`)}
+          onClick={goToDetails}
           loading="lazy"
           decoding="async"
           className="h-48 w-full cursor-pointer object-cover transition duration-500 group-hover:scale-[1.035] sm:h-52"
@@ -66,9 +72,20 @@ function ProductCard({ product }) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/35 to-transparent" />
       </div>
 
-      <div className="p-3.5 sm:p-5">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={goToDetails}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            goToDetails();
+          }
+        }}
+        className="p-3.5 sm:p-5"
+        aria-label={`View ${product.title} details`}
+      >
         <h3
-          onClick={() => navigate(`/product/${product.id}`)}
           className="line-clamp-2 cursor-pointer text-[1.05rem] font-bold leading-snug text-slate-900 hover:underline sm:text-base"
         >
           {product.title}
@@ -95,7 +112,10 @@ function ProductCard({ product }) {
             <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5">
               <button
                 type="button"
-                onClick={() => decreaseQuantity(product.id).catch((error) => window.alert(error.message))}
+                onClick={(event) => {
+                  stopPropagation(event);
+                  decreaseQuantity(product.id).catch((error) => window.alert(error.message));
+                }}
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800"
                 aria-label={`Decrease ${product.title} quantity`}
               >
@@ -106,8 +126,11 @@ function ProductCard({ product }) {
               </span>
               <button
                 type="button"
-                onClick={handleAddToCart}
-                disabled={isOutOfStock}
+                onClick={(event) => {
+                  stopPropagation(event);
+                  handleAddToCart();
+                }}
+                disabled={isOutOfStock || cartQuantity >= 10}
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label={`Increase ${product.title} quantity`}
               >
@@ -117,7 +140,10 @@ function ProductCard({ product }) {
           ) : (
             <button
               type="button"
-              onClick={handleAddToCart}
+              onClick={(event) => {
+                stopPropagation(event);
+                handleAddToCart();
+              }}
               disabled={isOutOfStock}
               className="w-full rounded-xl bg-slate-950 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
@@ -127,7 +153,10 @@ function ProductCard({ product }) {
 
           <button
             type="button"
-            onClick={handleBuyNow}
+            onClick={(event) => {
+              stopPropagation(event);
+              handleBuyNow();
+            }}
             disabled={isOutOfStock}
             className="cod-button w-full rounded-xl py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
           >
