@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { FiCrosshair, FiMapPin } from "react-icons/fi";
 
 import { apiClient } from "../../lib/api";
 import { cleanMobile, cleanPincode } from "../../lib/address";
@@ -205,9 +206,21 @@ export default function AddressForm({
           type="button"
           onClick={handleUseCurrentLocation}
           disabled={disabled || geoLocationState.loading}
-          className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {geoLocationState.loading ? "Detecting location..." : "Use current location"}
+          {geoLocationState.loading ? (
+            <>
+              <FiCrosshair className="animate-pulse text-base text-slate-700" />
+              Detecting location...
+            </>
+          ) : (
+            <>
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white">
+                <FiMapPin className="text-sm" />
+              </span>
+              Use current location
+            </>
+          )}
         </button>
         {geoLocationState.error && (
           <p className="mt-2 text-xs font-medium text-red-600">
