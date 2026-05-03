@@ -77,7 +77,7 @@ const toCartItem = (productOrId, quantity, currentCart, fallbackProduct = null) 
 };
 
 export function CartProvider({ children }) {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const [cart, setCart] = useState(() => getStoredCart());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -105,6 +105,14 @@ export function CartProvider({ children }) {
       setError("");
       return applyCartResponse(data);
     } catch (apiError) {
+      if (apiError?.response?.status === 401) {
+        logout();
+        const guestCart = getStoredCart();
+        setCart(guestCart);
+        setError("Your session expired. Please sign in again.");
+        return null;
+      }
+
       const message = getApiErrorMessage(apiError, "Unable to load your cart.");
       setError(message);
       throw new Error(message, { cause: apiError });
@@ -204,6 +212,13 @@ export function CartProvider({ children }) {
       setError("");
       return applyCartResponse(data);
     } catch (apiError) {
+      if (apiError?.response?.status === 401) {
+        logout();
+        const message = "Your session expired. Please sign in again.";
+        setError(message);
+        throw new Error(message, { cause: apiError });
+      }
+
       const message = getApiErrorMessage(apiError, "Unable to update your cart.");
       setError(message);
       throw new Error(message, { cause: apiError });
@@ -242,6 +257,13 @@ export function CartProvider({ children }) {
       setError("");
       return applyCartResponse(data);
     } catch (apiError) {
+      if (apiError?.response?.status === 401) {
+        logout();
+        const message = "Your session expired. Please sign in again.";
+        setError(message);
+        throw new Error(message, { cause: apiError });
+      }
+
       const message = getApiErrorMessage(apiError, "Unable to update item quantity.");
       setError(message);
       throw new Error(message, { cause: apiError });
@@ -268,6 +290,13 @@ export function CartProvider({ children }) {
       setError("");
       return applyCartResponse(data);
     } catch (apiError) {
+      if (apiError?.response?.status === 401) {
+        logout();
+        const message = "Your session expired. Please sign in again.";
+        setError(message);
+        throw new Error(message, { cause: apiError });
+      }
+
       const message = getApiErrorMessage(apiError, "Unable to remove this item.");
       setError(message);
       throw new Error(message, { cause: apiError });
@@ -301,6 +330,13 @@ export function CartProvider({ children }) {
       clearGuestCart();
       setError("");
     } catch (apiError) {
+      if (apiError?.response?.status === 401) {
+        logout();
+        const message = "Your session expired. Please sign in again.";
+        setError(message);
+        throw new Error(message, { cause: apiError });
+      }
+
       const message = getApiErrorMessage(apiError, "Unable to clear your cart.");
       setError(message);
       throw new Error(message, { cause: apiError });
