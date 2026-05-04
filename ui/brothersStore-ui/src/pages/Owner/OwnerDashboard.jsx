@@ -47,6 +47,22 @@ const formatDate = (dateValue) =>
     year: "numeric",
   });
 
+const formatOrderGroupKey = (dateValue) =>
+  new Date(dateValue).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+
+const formatOrderGroupLabel = (dateValue) =>
+  new Date(dateValue).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+
 const productToForm = (product) => ({
   id: product.id,
   title: product.title,
@@ -190,6 +206,29 @@ export default function OwnerDashboard() {
       ),
     [ownerOrders]
   );
+
+  const groupedRecentOrderLines = useMemo(() => {
+    const groups = new Map();
+
+    for (const line of recentOrderLines) {
+      const key = formatOrderGroupKey(line.order.createdAt);
+      const existing = groups.get(key);
+
+      if (existing) {
+        existing.lines.push(line);
+        continue;
+      }
+
+      groups.set(key, {
+        key,
+        label: formatOrderGroupLabel(line.order.createdAt),
+        sortValue: new Date(line.order.createdAt).getTime(),
+        lines: [line],
+      });
+    }
+
+    return Array.from(groups.values()).sort((a, b) => b.sortValue - a.sortValue);
+  }, [recentOrderLines]);
 
   const updateForm = (field, value) => {
     setProductForm((currentForm) => ({
@@ -969,133 +1008,156 @@ export default function OwnerDashboard() {
             </p>
           ) : (
             <>
-            <div className="mt-4 space-y-3 md:hidden">
-              {recentOrderLines.map(({ id, item, order }) => (
-                <article key={`mobile-order-${id}`} className="rounded-lg border border-gray-200 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">{order.code}</p>
-                      <p className="mt-1 font-semibold text-gray-900">{item.title}</p>
-                    </div>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        order.status === "Confirmed" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm font-semibold text-gray-900">{order.customerName}</p>
-                  {order.customerEmail && <p className="text-xs text-gray-500">{order.customerEmail}</p>}
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                    <div className="rounded-md bg-gray-50 px-2 py-1.5">
-                      <p className="text-gray-500">Qty</p>
-                      <p className="font-semibold text-gray-900">{item.quantity}</p>
-                    </div>
-                    <div className="rounded-md bg-gray-50 px-2 py-1.5">
-                      <p className="text-gray-500">Amount</p>
-                      <p className="font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</p>
-                    </div>
-                    <div className="rounded-md bg-gray-50 px-2 py-1.5">
-                      <p className="text-gray-500">Mobile</p>
-                      <p className="font-semibold text-gray-900">{order.customerMobile || "Not provided"}</p>
-                    </div>
-                  </div>
-                  {order.status !== "Confirmed" && (
-                    <button
-                      type="button"
-                      onClick={() => handleConfirmOrder(order)}
-                      className="mt-3 w-full rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white"
-                    >
-                      Confirm
-                    </button>
-                  )}
-                </article>
-              ))}
-            </div>
+            <p className="mt-4 text-xs font-medium text-gray-500">
+              Orders are grouped by date. Tap a date to expand/collapse.
+            </p>
 
-            <div className="mt-4 hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[820px] border-collapse text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-xs uppercase tracking-[0.16em] text-gray-500">
-                    <th className="py-3 pr-3 font-semibold">Order</th>
-                    <th className="py-3 pr-3 font-semibold">Product</th>
-                    <th className="py-3 pr-3 font-semibold">Customer</th>
-                    <th className="py-3 pr-3 font-semibold">Mobile</th>
-                    <th className="py-3 pr-3 font-semibold">Qty</th>
-                    <th className="py-3 pr-3 font-semibold">Amount</th>
-                    <th className="py-3 pr-3 font-semibold">Status</th>
-                    <th className="py-3 text-right font-semibold">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrderLines.map(({ id, item, order }) => (
-                    <tr key={id} className="border-b border-gray-100">
-                      <td className="py-3 pr-3 font-semibold text-gray-900">
-                        {order.code}
-                      </td>
-                      <td className="py-3 pr-3 text-gray-700">{item.title}</td>
-                      <td className="py-3 pr-3">
-                        <p className="font-semibold text-gray-900">
-                          {order.customerName}
-                        </p>
-                        {order.customerEmail && (
-                          <p className="text-xs text-gray-500">
-                            {order.customerEmail}
-                          </p>
-                        )}
-                      </td>
-                      <td className="py-3 pr-3 text-gray-700">
-                        {order.customerMobile || "Not provided"}
-                      </td>
-                      <td className="py-3 pr-3 text-gray-700">
-                        {item.quantity}
-                      </td>
-                      <td className="py-3 pr-3 font-semibold text-gray-900">
-                        {formatPrice(item.price * item.quantity)}
-                      </td>
-                      <td className="py-3 pr-3">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            order.status === "Confirmed"
-                              ? "bg-green-50 text-green-700"
-                              : "bg-amber-50 text-amber-700"
-                          }`}
-                        >
-                          {order.status}
-                        </span>
-                        {order.status === "Confirmed" && order.confirmedByAdminName && (
-                          <div className="mt-2 text-xs text-gray-500">
-                            Confirmed by {order.confirmedByAdminName}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3 text-right">
-                        {order.status === "Confirmed" ? (
-                          <div className="text-right">
-                            <span className="text-xs font-semibold text-gray-400">
-                              Done
+            <div className="mt-3 space-y-3">
+              {groupedRecentOrderLines.map((group, index) => (
+                <details
+                  key={group.key}
+                  open={index === 0}
+                  className="rounded-lg border border-gray-200 bg-white"
+                >
+                  <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-gray-900">
+                    <span>{group.label}</span>
+                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                      {group.lines.length} item{group.lines.length === 1 ? "" : "s"}
+                    </span>
+                  </summary>
+
+                  <div className="border-t border-gray-100 px-4 py-4">
+                    <div className="space-y-3 md:hidden">
+                      {group.lines.map(({ id, item, order }) => (
+                        <article key={`mobile-order-${id}`} className="rounded-lg border border-gray-200 p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">{order.code}</p>
+                              <p className="mt-1 font-semibold text-gray-900">{item.title}</p>
+                            </div>
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                order.status === "Confirmed" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
+                              }`}
+                            >
+                              {order.status}
                             </span>
-                            {order.confirmedByAdminEmail && (
-                              <div className="mt-1 text-[11px] text-gray-400">
-                                {order.confirmedByAdminEmail}
-                              </div>
-                            )}
                           </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleConfirmOrder(order)}
-                            className="rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white"
-                          >
-                            Confirm
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          <p className="mt-2 text-sm font-semibold text-gray-900">{order.customerName}</p>
+                          {order.customerEmail && <p className="text-xs text-gray-500">{order.customerEmail}</p>}
+                          <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                            <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                              <p className="text-gray-500">Qty</p>
+                              <p className="font-semibold text-gray-900">{item.quantity}</p>
+                            </div>
+                            <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                              <p className="text-gray-500">Amount</p>
+                              <p className="font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</p>
+                            </div>
+                            <div className="rounded-md bg-gray-50 px-2 py-1.5">
+                              <p className="text-gray-500">Mobile</p>
+                              <p className="font-semibold text-gray-900">{order.customerMobile || "Not provided"}</p>
+                            </div>
+                          </div>
+                          {order.status !== "Confirmed" && (
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmOrder(order)}
+                              className="mt-3 w-full rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white"
+                            >
+                              Confirm
+                            </button>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+
+                    <div className="hidden overflow-x-auto md:block">
+                      <table className="w-full min-w-[820px] border-collapse text-left text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-100 text-xs uppercase tracking-[0.16em] text-gray-500">
+                            <th className="py-3 pr-3 font-semibold">Order</th>
+                            <th className="py-3 pr-3 font-semibold">Product</th>
+                            <th className="py-3 pr-3 font-semibold">Customer</th>
+                            <th className="py-3 pr-3 font-semibold">Mobile</th>
+                            <th className="py-3 pr-3 font-semibold">Qty</th>
+                            <th className="py-3 pr-3 font-semibold">Amount</th>
+                            <th className="py-3 pr-3 font-semibold">Status</th>
+                            <th className="py-3 text-right font-semibold">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.lines.map(({ id, item, order }) => (
+                            <tr key={id} className="border-b border-gray-100">
+                              <td className="py-3 pr-3 font-semibold text-gray-900">
+                                {order.code}
+                              </td>
+                              <td className="py-3 pr-3 text-gray-700">{item.title}</td>
+                              <td className="py-3 pr-3">
+                                <p className="font-semibold text-gray-900">
+                                  {order.customerName}
+                                </p>
+                                {order.customerEmail && (
+                                  <p className="text-xs text-gray-500">
+                                    {order.customerEmail}
+                                  </p>
+                                )}
+                              </td>
+                              <td className="py-3 pr-3 text-gray-700">
+                                {order.customerMobile || "Not provided"}
+                              </td>
+                              <td className="py-3 pr-3 text-gray-700">
+                                {item.quantity}
+                              </td>
+                              <td className="py-3 pr-3 font-semibold text-gray-900">
+                                {formatPrice(item.price * item.quantity)}
+                              </td>
+                              <td className="py-3 pr-3">
+                                <span
+                                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                    order.status === "Confirmed"
+                                      ? "bg-green-50 text-green-700"
+                                      : "bg-amber-50 text-amber-700"
+                                  }`}
+                                >
+                                  {order.status}
+                                </span>
+                                {order.status === "Confirmed" && order.confirmedByAdminName && (
+                                  <div className="mt-2 text-xs text-gray-500">
+                                    Confirmed by {order.confirmedByAdminName}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-3 text-right">
+                                {order.status === "Confirmed" ? (
+                                  <div className="text-right">
+                                    <span className="text-xs font-semibold text-gray-400">
+                                      Done
+                                    </span>
+                                    {order.confirmedByAdminEmail && (
+                                      <div className="mt-1 text-[11px] text-gray-400">
+                                        {order.confirmedByAdminEmail}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleConfirmOrder(order)}
+                                    className="rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white"
+                                  >
+                                    Confirm
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </details>
+              ))}
             </div>
             </>
           )}
