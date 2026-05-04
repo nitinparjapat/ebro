@@ -5,6 +5,9 @@ substitutions:
   _PLATFORM: "managed"
   _SERVICE_NAME: "brothersstore-api"
 
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 steps:
   - name: "gcr.io/cloud-builders/docker"
     dir: "backend/BrothersStoreProductionBackend"
@@ -35,4 +38,3 @@ steps:
 
 images:
   - "${_AR_HOSTNAME}/${PROJECT_ID}/${_AR_REPOSITORY}/${_SERVICE_NAME}:${SHORT_SHA}"
-
