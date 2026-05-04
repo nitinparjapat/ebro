@@ -16,10 +16,14 @@ import { useProducts } from "../../context/ProductsContext";
 const formatPrice = (amount) => `Rs. ${amount.toLocaleString("en-IN")}`;
 
 const formatDate = (dateValue) =>
-  new Date(dateValue).toLocaleDateString("en-IN", {
+  new Date(dateValue).toLocaleString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
   });
 
 const statusSteps = [
@@ -161,6 +165,12 @@ export default function TrackOrderPage() {
           </div>
         </header>
 
+        {order.firstOrderDiscountApplied && (
+          <div className="mt-4 rounded-lg bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+            Congrats! First order discount: {formatPrice(order.discountAmount)} off.
+          </div>
+        )}
+
         <section className="mt-5 rounded-lg bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-gray-900">Delivery timeline</h2>
 
@@ -248,7 +258,7 @@ export default function TrackOrderPage() {
               {order.shippingAddress}
             </p>
             <div className="mt-4 border-t border-gray-100 pt-4">
-              <p className="text-sm text-gray-500">Total amount</p>
+              <p className="text-sm text-gray-500">Total bill amount</p>
               <p className="mt-1 text-2xl font-bold text-gray-900">
                 {formatPrice(order.totalAmount)}
               </p>

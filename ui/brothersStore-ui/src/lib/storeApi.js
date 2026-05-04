@@ -98,6 +98,8 @@ export const normalizeOrder = (order) => {
   estimatedDelivery.setDate(estimatedDelivery.getDate() + 5);
   const rawStatus = order?.status ?? "Order Initialized";
   const status = rawStatus === "Pending" ? "Order Initialized" : rawStatus;
+  const discountAmount = toNumber(order?.discountAmount);
+  const originalTotalAmount = toNumber(order?.originalTotalAmount);
 
   return {
     id: order?.id ?? 0,
@@ -131,6 +133,9 @@ export const normalizeOrder = (order) => {
     confirmedAt: order?.confirmedAt ?? null,
     userId: order?.userId ?? order?.customer?.id ?? "",
     totalAmount: toNumber(order?.totalAmount),
+    discountAmount,
+    originalTotalAmount,
+    firstOrderDiscountApplied: Boolean(order?.firstOrderDiscountApplied || discountAmount > 0),
     totalQuantity: items.reduce((total, item) => total + item.quantity, 0),
     items,
     statusHistory: Array.isArray(order?.statusHistory) ? order.statusHistory : [],

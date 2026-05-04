@@ -8,10 +8,14 @@ import { useProducts } from "../../context/ProductsContext";
 const formatPrice = (amount) => `Rs. ${amount.toLocaleString("en-IN")}`;
 
 const formatDate = (dateValue) =>
-  new Date(dateValue).toLocaleDateString("en-IN", {
+  new Date(dateValue).toLocaleString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
   });
 
 export default function OrdersPage() {
@@ -183,12 +187,18 @@ export default function OrdersPage() {
                   </div>
 
                   <div className="rounded-lg bg-gray-50 px-3 py-3">
-                    <p className="text-gray-500">Total amount</p>
+                    <p className="text-gray-500">Total bill amount</p>
                     <p className="mt-1 text-lg font-bold text-gray-900">
                       {formatPrice(order.totalAmount)}
                     </p>
                   </div>
                 </div>
+
+                {order.firstOrderDiscountApplied && (
+                  <div className="mt-3 rounded-lg bg-green-50 px-3 py-3 text-sm font-semibold text-green-700">
+                    Congrats! First order discount: {formatPrice(order.discountAmount)} off.
+                  </div>
+                )}
               </article>
             ))}
           </div>

@@ -113,6 +113,14 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = "Shipping address is required." });
         }
 
+        var hasPreviousOrders = await db.Orders
+            .AsNoTracking()
+            .AnyAsync(order => order.CustomerEmail == userEmail);
+
+        var originalTotalAmount = cartItems.Sum(item => item.Price * item.Quantity);
+        var discountAmount = !hasPreviousOrders ? Math.Min(50m, originalTotalAmount) : 0m;
+        var finalTotalAmount = Math.Max(0m, originalTotalAmount - discountAmount);
+
         var order = new Order
         {
             CustomerName = string.IsNullOrWhiteSpace(request.CustomerName)
@@ -123,7 +131,7 @@ public class OrdersController : ControllerBase
             ShippingAddress = request.ShippingAddress?.Trim() ?? "",
             PaymentMethod = request.PaymentMethod?.Trim() ?? "Cash on Delivery",
             Status = "Pending",
-            TotalAmount = cartItems.Sum(item => item.Price * item.Quantity),
+            TotalAmount = finalTotalAmount,
             CreatedAt = DateTime.UtcNow,
             Items = cartItems.Select(item => new OrderItem
             {
@@ -145,7 +153,25 @@ public class OrdersController : ControllerBase
         await db.SaveChangesAsync();
         _ = orderEmailNotificationService.SendOrderPlacedNotificationsAsync(order);
 
-        return Ok(order);
+        return Ok(new
+        {
+            order.Id,
+            order.CustomerName,
+            order.CustomerMobile,
+            order.CustomerEmail,
+            order.ShippingAddress,
+            order.PaymentMethod,
+            order.Status,
+            order.ConfirmedByAdminName,
+            order.ConfirmedByAdminEmail,
+            order.ConfirmedAt,
+            order.TotalAmount,
+            order.CreatedAt,
+            items = order.Items,
+            originalTotalAmount,
+            discountAmount,
+            firstOrderDiscountApplied = discountAmount > 0,
+        });
     }
 
     [HttpPatch("{id:int}/status")]
