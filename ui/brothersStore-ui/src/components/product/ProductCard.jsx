@@ -52,12 +52,12 @@ function ProductCard({ product }) {
           stopPropagation(event);
           toggleWishlist(product);
         }}
-        className={`absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/92 shadow-sm backdrop-blur transition hover:scale-105 ${
+        className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/92 shadow-sm backdrop-blur transition hover:scale-105 ${
           isWishlisted ? "text-red-500" : "text-slate-300 hover:text-red-400"
         }`}
         aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
       >
-        <FaHeart className="text-lg" />
+        <FaHeart className="text-base" />
       </button>
 
       <div className="relative overflow-hidden">
@@ -67,7 +67,7 @@ function ProductCard({ product }) {
           onClick={goToDetails}
           loading="lazy"
           decoding="async"
-          className="h-48 w-full cursor-pointer object-cover transition duration-500 group-hover:scale-[1.035] sm:h-52"
+          className="h-44 w-full cursor-pointer object-cover transition duration-500 group-hover:scale-[1.035] sm:h-48"
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/35 to-transparent" />
       </div>
@@ -82,11 +82,11 @@ function ProductCard({ product }) {
             goToDetails();
           }
         }}
-        className="p-3.5 sm:p-5"
+        className="p-3 sm:p-4"
         aria-label={`View ${product.title} details`}
       >
         <h3
-          className="line-clamp-2 cursor-pointer text-[1.05rem] font-bold leading-snug text-slate-900 hover:underline sm:text-base"
+          className="line-clamp-2 cursor-pointer text-base font-bold leading-snug text-slate-900 hover:underline sm:text-[0.95rem]"
         >
           {product.title}
         </h3>
@@ -96,9 +96,9 @@ function ProductCard({ product }) {
         <Rating rating={product.rating} />
 
         <div className="mt-1 flex items-center gap-2">
-          <span className="text-[1.65rem] font-black leading-none text-slate-900 sm:text-lg">Rs. {product.price.toLocaleString("en-IN")}</span>
+          <span className="text-xl font-black leading-none text-slate-900 sm:text-lg">Rs. {product.price.toLocaleString("en-IN")}</span>
 
-          <span className="text-sm text-gray-400 line-through">
+          <span className="text-xs text-gray-400 line-through">
             Rs. {product.oldPrice.toLocaleString("en-IN")}
           </span>
         </div>
@@ -107,21 +107,21 @@ function ProductCard({ product }) {
           {isOutOfStock ? "Out of stock" : `${product.stock} left in stock`}
         </p>
 
-        <div className="mt-4 grid gap-2">
+        <div className="mt-3 grid gap-2">
           {cartQuantity > 0 ? (
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5">
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-2 py-1">
               <button
                 type="button"
                 onClick={(event) => {
                   stopPropagation(event);
                   decreaseQuantity(product.id).catch((error) => window.alert(error.message));
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800"
                 aria-label={`Decrease ${product.title} quantity`}
               >
                 <FiMinus />
               </button>
-              <span className="min-w-8 text-center text-base font-bold text-slate-900">
+              <span className="min-w-8 text-center text-sm font-bold text-slate-900">
                 {cartQuantity}
               </span>
               <button
@@ -131,7 +131,7 @@ function ProductCard({ product }) {
                   handleAddToCart();
                 }}
                 disabled={isOutOfStock || cartQuantity >= 10}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label={`Increase ${product.title} quantity`}
               >
                 <FiPlus />
@@ -145,7 +145,7 @@ function ProductCard({ product }) {
                 handleAddToCart();
               }}
               disabled={isOutOfStock}
-              className="w-full rounded-xl bg-slate-950 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="w-full rounded-xl bg-slate-950 py-1.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               Add to Cart
             </button>
@@ -158,7 +158,7 @@ function ProductCard({ product }) {
               handleBuyNow();
             }}
             disabled={isOutOfStock}
-            className="cod-button w-full rounded-xl py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+            className="cod-button w-full rounded-xl py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
           >
             <span
               aria-hidden="true"
@@ -172,7 +172,7 @@ function ProductCard({ product }) {
               aria-hidden="true"
               className="cod-button__spark cod-button__spark--right"
             />
-            <span className="cod-button__label">Buy Now (COD)</span>
+            <span className="cod-button__label">Buy Now (Cash on Delivery)</span>
           </button>
         </div>
       </div>

@@ -326,19 +326,19 @@ export default function ProductDetails() {
                   <button
                     type="button"
                     onClick={() => decreaseQuantity(product.id).catch((error) => window.alert(error.message))}
-                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800"
                     aria-label={`Decrease ${product.title} quantity`}
                   >
                     <FiMinus />
                   </button>
-                  <span className="min-w-10 text-center text-lg font-bold text-slate-900">
+                  <span className="min-w-10 text-center text-base font-bold text-slate-900">
                     {cartQuantity}
                   </span>
                   <button
                     type="button"
                     onClick={handleAddToCart}
                     disabled={product.stock <= 0 || cartQuantity >= 10}
-                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     aria-label={`Increase ${product.title} quantity`}
                   >
                     <FiPlus />
@@ -349,7 +349,7 @@ export default function ProductDetails() {
                   type="button"
                   onClick={handleAddToCart}
                   disabled={product.stock <= 0}
-                  className="w-full rounded-lg bg-black py-3 text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+                  className="w-full rounded-lg bg-black py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
                 >
                   Add To Cart
                 </button>
@@ -359,7 +359,7 @@ export default function ProductDetails() {
                 type="button"
                 onClick={handleBuyNow}
                 disabled={product.stock <= 0}
-                className="cod-button w-full rounded-lg py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                className="cod-button w-full rounded-lg py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span
                   aria-hidden="true"
@@ -373,7 +373,7 @@ export default function ProductDetails() {
                   aria-hidden="true"
                   className="cod-button__spark cod-button__spark--right"
                 />
-                <span className="cod-button__label">Buy Now (COD)</span>
+                <span className="cod-button__label">Buy Now (Cash on Delivery)</span>
               </button>
             </div>
 
