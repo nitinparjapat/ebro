@@ -140,6 +140,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddMemoryCache();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.Configure<AdminNotificationOptions>(builder.Configuration.GetSection("AdminNotification"));
 builder.Services.Configure<PublicSiteOptions>(builder.Configuration.GetSection("PublicSite"));
