@@ -277,7 +277,16 @@ export default function CartPage() {
                 return (
                   <article
                     key={item.id}
-                    className="rounded-lg bg-white p-4 shadow-sm"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/product/${item.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/product/${item.id}`);
+                      }
+                    }}
+                    className="cursor-pointer rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-900/20"
                   >
                     <div className="flex gap-3">
                       {image && (
@@ -285,22 +294,16 @@ export default function CartPage() {
                           src={image}
                           alt={item.title}
                           className="h-24 w-24 shrink-0 rounded-lg object-cover"
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => navigate(`/product/${item.id}`)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              navigate(`/product/${item.id}`);
-                            }
-                          }}
                         />
                       )}
 
                       <div className="min-w-0 flex-1">
                         <button
                           type="button"
-                          onClick={() => navigate(`/product/${item.id}`)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            navigate(`/product/${item.id}`);
+                          }}
                           className="text-left font-semibold text-gray-900 hover:underline"
                         >
                           {item.title}
@@ -320,12 +323,14 @@ export default function CartPage() {
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          onClick={() =>
+                          onClick={(event) => {
+                            event.stopPropagation();
                             decreaseQuantity(item.id).catch((apiError) => {
                               setCheckoutError(apiError.message);
                               refreshCart().catch(() => {
                               });
-                            })}
+                            });
+                          }}
                           className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 text-gray-800"
                           aria-label={`Decrease ${item.title} quantity`}
                         >
@@ -338,7 +343,8 @@ export default function CartPage() {
 
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation();
                             if (item.quantity >= 10) {
                               setCheckoutError("You can only add up to 10 quantity for a product.");
                               return;
@@ -359,7 +365,10 @@ export default function CartPage() {
 
                         <button
                           type="button"
-                          onClick={() => removeFromCart(item.id).catch((apiError) => setCheckoutError(apiError.message))}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeFromCart(item.id).catch((apiError) => setCheckoutError(apiError.message));
+                          }}
                           className="ml-auto flex h-10 w-10 items-center justify-center rounded-lg text-red-500 sm:ml-2"
                           aria-label={`Remove ${item.title}`}
                         >
