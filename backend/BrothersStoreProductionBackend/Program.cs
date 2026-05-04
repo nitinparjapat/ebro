@@ -15,6 +15,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((ctx, lc) => lc.WriteTo.Console());
 
+var cloudRunPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(cloudRunPort))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{cloudRunPort}");
+}
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
