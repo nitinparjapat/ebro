@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+**/.vs/
+**/node_modules/
+ui/**/dist/
+run-logs/
+.git/
+.gitignore
+README.md
