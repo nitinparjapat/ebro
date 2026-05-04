@@ -530,7 +530,7 @@ export default function CartPage() {
                   className="cod-button__spark cod-button__spark--right"
                 />
                 <span className="cod-button__label">
-                  {placingOrder ? "Placing order..." : "Proceed with COD"}
+                  {placingOrder ? "Placing order..." : "Proceed with Cash on Delivery"}
                 </span>
               </button>
 
