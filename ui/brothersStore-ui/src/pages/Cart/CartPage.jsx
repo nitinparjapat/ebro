@@ -320,7 +320,12 @@ export default function CartPage() {
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          onClick={() => decreaseQuantity(item.id).catch((apiError) => setCheckoutError(apiError.message))}
+                          onClick={() =>
+                            decreaseQuantity(item.id).catch((apiError) => {
+                              setCheckoutError(apiError.message);
+                              refreshCart().catch(() => {
+                              });
+                            })}
                           className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 text-gray-800"
                           aria-label={`Decrease ${item.title} quantity`}
                         >
@@ -333,7 +338,19 @@ export default function CartPage() {
 
                         <button
                           type="button"
-                          onClick={() => addToCart(item.id).catch((apiError) => setCheckoutError(apiError.message))}
+                          onClick={() => {
+                            if (item.quantity >= 10) {
+                              setCheckoutError("You can only add up to 10 quantity for a product.");
+                              return;
+                            }
+
+                            addToCart(item.id).catch((apiError) => {
+                              setCheckoutError(apiError.message);
+                              refreshCart().catch(() => {
+                              });
+                            });
+                          }}
+                          disabled={item.quantity >= 10}
                           className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 text-gray-800"
                           aria-label={`Increase ${item.title} quantity`}
                         >
