@@ -232,6 +232,12 @@ public sealed class OrderEmailNotificationService : IOrderEmailNotificationServi
             return "";
         }
 
+        if (baseUrl.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
+            baseUrl.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase))
+        {
+            return "";
+        }
+
         var trackUrl = $"{baseUrl}/track-order/{orderId}";
 
         return $"""
