@@ -34,6 +34,7 @@ import {
   validateAddress,
   validateAddressFields,
 } from "../../lib/address";
+import { getApiErrorMessage } from "../../lib/storeApi";
 
 const formatPrice = (amount) => `Rs. ${amount.toLocaleString("en-IN")}`;
 
@@ -368,7 +369,7 @@ export default function CartPage() {
         });
       });
     } catch (error) {
-      setCheckoutError(error.message || "Unable to process online payment.");
+      setCheckoutError(getApiErrorMessage(error, "Unable to process online payment."));
     } finally {
       setPlacingOrder(false);
     }
