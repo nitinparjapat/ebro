@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FiChevronDown, FiChevronUp, FiEdit3, FiMapPin, FiMinus, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiChevronDown, FiChevronUp, FiEdit3, FiMapPin, FiMinus, FiPlus, FiTrash2, FiX } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 import AddressForm from "../../components/common/AddressForm";
@@ -54,7 +54,9 @@ export default function CartPage() {
   const [addressErrors, setAddressErrors] = useState({});
   const [placingOrder, setPlacingOrder] = useState(false);
   const [confirmOrderOpen, setConfirmOrderOpen] = useState(false);
+  const [successOrder, setSuccessOrder] = useState(null);
   const autoSaveTimeoutRef = useRef(null);
+  const keepAddressFormOpenRef = useRef(savedAddresses.length === 0);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -67,10 +69,11 @@ export default function CartPage() {
       if (selectedAddress) {
         setSelectedAddressId(selectedAddress.id);
         setDeliveryAddress(selectedAddress);
-        setAddressFormExpanded(false);
+        setAddressFormExpanded(keepAddressFormOpenRef.current);
         return;
       }
 
+      keepAddressFormOpenRef.current = true;
       setAddressFormExpanded(true);
       setDeliveryAddress((currentAddress) =>
         normalizeAddress({
@@ -84,6 +87,7 @@ export default function CartPage() {
   }, [profile, selectedAddressId]);
 
   const handleSelectAddress = (address) => {
+    keepAddressFormOpenRef.current = false;
     setSelectedAddressId(address.id);
     setDeliveryAddress(address);
     setAddressFormExpanded(false);
@@ -92,6 +96,7 @@ export default function CartPage() {
   };
 
   const handleNewAddress = () => {
+    keepAddressFormOpenRef.current = true;
     setSelectedAddressId("");
     setDeliveryAddress(
       normalizeAddress({
@@ -107,6 +112,7 @@ export default function CartPage() {
   };
 
   const handleEditAddress = (address) => {
+    keepAddressFormOpenRef.current = true;
     setSelectedAddressId(address.id);
     setDeliveryAddress(address);
     setAddressFormExpanded(true);
@@ -134,6 +140,7 @@ export default function CartPage() {
     if (deliveryAddress.isDefault || savedAddresses.length === 0) {
       setDefaultAddress(savedAddress.id);
     }
+    keepAddressFormOpenRef.current = false;
     setAddressFormExpanded(false);
     setCheckoutError("");
     setAddressErrors({});
@@ -220,9 +227,10 @@ export default function CartPage() {
         customerEmail: profile.email,
       });
 
-      await refreshCart();
       setCheckoutError("");
-      navigate(`/track-order/${order.id}`, { state: { order } });
+      setSuccessOrder(order);
+      refreshCart().catch(() => {
+      });
     } catch (error) {
       setCheckoutError(error.message);
     } finally {
@@ -412,7 +420,10 @@ export default function CartPage() {
                     {savedAddresses.length > 0 && (
                       <button
                         type="button"
-                        onClick={() => setAddressFormExpanded((currentValue) => !currentValue)}
+                        onClick={() => {
+                          keepAddressFormOpenRef.current = !addressFormExpanded;
+                          setAddressFormExpanded((currentValue) => !currentValue);
+                        }}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500"
                       >
                         {addressFormExpanded ? <FiChevronUp /> : <FiChevronDown />}
@@ -435,28 +446,37 @@ export default function CartPage() {
                       const isSelected = selectedAddressId === address.id;
 
                       return (
-                        <button
+                        <div
                           key={address.id}
-                          type="button"
-                          onClick={() => handleSelectAddress(address)}
-                          className={`rounded-lg border px-3 py-3 text-left ${
+                          className={`rounded-lg border px-3 py-3 ${
                             isSelected
                               ? "border-green-600 bg-green-50"
                               : "border-gray-200 bg-white"
                           }`}
                         >
-                          <span className="flex items-center justify-between gap-3">
-                            <span className="flex min-w-0 items-center gap-2">
-                              <FiMapPin className="shrink-0 text-gray-500" />
-                              <span className="truncate text-sm font-bold text-gray-900">
-                                {address.label || "Delivery"}
-                              </span>
-                              {address.isDefault && (
-                                <span className="rounded-full bg-black px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white">
-                                  Default
+                          <div className="flex items-start justify-between gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectAddress(address)}
+                              className="min-w-0 flex-1 text-left"
+                            >
+                              <span className="flex min-w-0 items-center gap-2">
+                                <FiMapPin className="shrink-0 text-gray-500" />
+                                <span className="truncate text-sm font-bold text-gray-900">
+                                  {address.label || "Delivery"}
                                 </span>
-                              )}
-                            </span>
+                                {address.isDefault && (
+                                  <span className="rounded-full bg-black px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white">
+                                    Default
+                                  </span>
+                                )}
+                              </span>
+                              <span className="mt-2 block line-clamp-2 text-xs leading-5 text-gray-600">
+                                {address.fullName}, {address.addressLine1},{" "}
+                                {address.city} - {address.pincode}
+                              </span>
+                            </button>
+
                             <button
                               type="button"
                               onClick={(event) => {
@@ -468,17 +488,13 @@ export default function CartPage() {
                             >
                               <FiEdit3 />
                             </button>
-                          </span>
-                          <span className="mt-2 block line-clamp-2 text-xs leading-5 text-gray-600">
-                            {address.fullName}, {address.addressLine1},{" "}
-                            {address.city} - {address.pincode}
-                          </span>
+                          </div>
+
                           {!address.isDefault && (
-                            <span className="mt-3 block">
+                            <div className="mt-3">
                               <button
                                 type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
+                                onClick={() => {
                                   setDefaultAddress(address.id);
                                   handleSelectAddress({ ...address, isDefault: true });
                                 }}
@@ -486,9 +502,9 @@ export default function CartPage() {
                               >
                                 Make default
                               </button>
-                            </span>
+                            </div>
                           )}
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -577,6 +593,72 @@ export default function CartPage() {
               >
                 Yes, Place Order
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {successOrder && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/60 px-4">
+          <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] bg-white p-6 text-center shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setSuccessOrder(null)}
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+              aria-label="Close success message"
+            >
+              <FiX />
+            </button>
+
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              <span className="absolute -top-6 left-8 h-24 w-24 rounded-full bg-amber-100/80 blur-2xl" />
+              <span className="absolute -right-8 top-8 h-24 w-24 rounded-full bg-pink-100/80 blur-2xl" />
+              <span className="absolute left-4 top-12 h-3 w-3 rounded-full bg-amber-300 animate-bounce" />
+              <span className="absolute left-12 top-20 h-2 w-6 -rotate-12 rounded-full bg-rose-300 animate-pulse" />
+              <span className="absolute left-20 top-10 h-3 w-3 rounded-full bg-sky-300 animate-ping" />
+              <span className="absolute right-20 top-12 h-3 w-3 rounded-full bg-emerald-300 animate-bounce" />
+              <span className="absolute right-10 top-24 h-2 w-6 rotate-12 rounded-full bg-violet-300 animate-pulse" />
+              <span className="absolute right-14 top-36 h-3 w-3 rounded-full bg-orange-300 animate-ping" />
+              <span className="absolute bottom-24 left-10 h-2 w-7 rotate-45 rounded-full bg-cyan-300 animate-bounce" />
+              <span className="absolute bottom-20 right-12 h-2 w-7 -rotate-45 rounded-full bg-lime-300 animate-pulse" />
+            </div>
+
+            <div className="relative">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-4xl shadow-inner shadow-emerald-200">
+                <span aria-hidden="true" className="text-emerald-600">✓</span>
+              </div>
+              <h3 className="mt-5 text-2xl font-bold text-slate-900">
+                Thank you for placing your order
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Your order {successOrder.code} has been placed successfully.
+              </p>
+              <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-emerald-600">
+                Celebration unlocked
+              </p>
+              <div className="mt-6 grid gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const order = successOrder;
+                    setSuccessOrder(null);
+                    navigate(`/track-order/${order.id}`, { state: { order } });
+                  }}
+                  className="w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white"
+                >
+                  Track Order
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSuccessOrder(null);
+                    navigate("/orders");
+                  }}
+                  className="w-full rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-700"
+                >
+                  View My Orders
+                </button>
+              </div>
             </div>
           </div>
         </div>
