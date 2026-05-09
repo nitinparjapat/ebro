@@ -195,7 +195,24 @@ app.Use(async (context, next) =>
     headers["X-Frame-Options"] = "DENY";
     headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
-    headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';";
+
+    // Razorpay Standard Checkout loads an external script and renders a hosted iframe/window.
+    // Keep API responses locked down, but allow Razorpay assets on the frontend pages.
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';";
+    }
+    else
+    {
+        headers["Content-Security-Policy"] =
+            "default-src 'self'; " +
+            "frame-ancestors 'none'; " +
+            "script-src 'self' https://checkout.razorpay.com; " +
+            "frame-src https://api.razorpay.com https://*.razorpay.com; " +
+            "connect-src 'self' https://api.razorpay.com https://*.razorpay.com; " +
+            "img-src 'self' data: https:; " +
+            "style-src 'self' 'unsafe-inline';";
+    }
 
     if (context.Request.Path.StartsWithSegments("/api"))
     {
