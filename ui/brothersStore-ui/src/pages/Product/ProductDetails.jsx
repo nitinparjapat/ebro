@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaHeart } from "react-icons/fa";
-import { FiChevronLeft, FiChevronRight, FiMinus, FiPlus } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiMinus, FiPlay, FiPlus } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Rating from "../../components/common/Rating";
@@ -28,6 +28,8 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [shouldLoadActiveVideo, setShouldLoadActiveVideo] = useState(false);
+  const [isActiveVideoLoading, setIsActiveVideoLoading] = useState(false);
 
   const productId = Number(id);
 
@@ -115,7 +117,9 @@ export default function ProductDetails() {
   const cartQuantity = cartItem?.quantity ?? 0;
 
   const approvedReviews = getApprovedReviewsForProduct(productId);
-  const discountPercent = product.discountPercent || getDiscountPercent(product.oldPrice, product.price);
+  const discountPercent = product
+    ? product.discountPercent || getDiscountPercent(product.oldPrice, product.price)
+    : 0;
 
   useEffect(() => {
     if (galleryMedia.length <= 1 || currentMedia?.type === "video") {
@@ -128,6 +132,62 @@ export default function ProductDetails() {
 
     return () => window.clearTimeout(timeoutId);
   }, [currentMedia?.type, galleryMedia.length, selectedImageIndex]);
+
+  useEffect(() => {
+    if (currentMedia?.type !== "video") {
+      setShouldLoadActiveVideo(false);
+      setIsActiveVideoLoading(false);
+      return undefined;
+    }
+
+    setShouldLoadActiveVideo(false);
+    setIsActiveVideoLoading(true);
+
+    let cancelled = false;
+    let timeoutId;
+    let idleId;
+
+    const enableVideoLoad = () => {
+      timeoutId = window.setTimeout(() => {
+        if (!cancelled) {
+          setShouldLoadActiveVideo(true);
+        }
+      }, 250);
+    };
+
+    const scheduleVideoLoad = () => {
+      if (typeof window.requestIdleCallback === "function") {
+        idleId = window.requestIdleCallback(enableVideoLoad, { timeout: 1500 });
+        return;
+      }
+
+      enableVideoLoad();
+    };
+
+    const handleWindowLoad = () => {
+      scheduleVideoLoad();
+    };
+
+    if (document.readyState === "complete") {
+      scheduleVideoLoad();
+    } else {
+      window.addEventListener("load", handleWindowLoad, { once: true });
+    }
+
+    return () => {
+      cancelled = true;
+
+      if (typeof idleId === "number" && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleId);
+      }
+
+      if (typeof timeoutId === "number") {
+        window.clearTimeout(timeoutId);
+      }
+
+      window.removeEventListener("load", handleWindowLoad);
+    };
+  }, [currentMedia?.src, currentMedia?.type]);
 
   const moveMedia = (direction) => {
     if (galleryMedia.length <= 1) {
@@ -214,17 +274,46 @@ export default function ProductDetails() {
         <div>
           <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
             {currentMedia?.type === "video" ? (
-              <video
-                key={currentMedia.src}
-                src={currentMedia.src}
-                autoPlay
-                muted
-                playsInline
-                controls
-                preload="metadata"
-                onEnded={handleVideoEnded}
-                className="aspect-square w-full bg-black object-contain"
-              />
+              <div className="relative aspect-square w-full bg-black">
+                {shouldLoadActiveVideo ? (
+                  <>
+                    <video
+                      key={currentMedia.src}
+                      src={currentMedia.src}
+                      autoPlay
+                      muted
+                      playsInline
+                      controls
+                      preload="none"
+                      onLoadedData={() => setIsActiveVideoLoading(false)}
+                      onCanPlay={() => setIsActiveVideoLoading(false)}
+                      onEnded={handleVideoEnded}
+                      className="h-full w-full object-contain"
+                    />
+                    {isActiveVideoLoading && (
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/55">
+                        <span className="rounded-full bg-white/14 px-4 py-2 text-sm font-semibold text-white backdrop-blur">
+                          Loading video...
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
+                    <div className="flex flex-col items-center gap-3 text-center">
+                      <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                        <FiPlay className="text-2xl" />
+                      </span>
+                      <div>
+                        <p className="text-base font-semibold">Video ready</p>
+                        <p className="text-sm text-white/70">
+                          Loading after the page finishes rendering
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <img
                 src={currentMedia?.src}
@@ -269,13 +358,9 @@ export default function ProductDetails() {
                 >
                   {media.type === "video" ? (
                     <>
-                      <video
-                        src={media.src}
-                        muted
-                        playsInline
-                        preload="metadata"
-                        className="h-full w-full bg-black object-cover"
-                      />
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
+                        <FiPlay className="text-lg" />
+                      </div>
                       <span className="absolute bottom-1 left-1 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-white">
                         Video
                       </span>

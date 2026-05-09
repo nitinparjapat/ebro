@@ -750,7 +750,7 @@ export default function OwnerDashboard() {
                   />
                 </label>
                 <p className="mt-2 text-xs text-gray-500">
-                  Videos are saved with the product and autoplay muted on the product page. Keep each video under 20 MB.
+                  Videos are saved with the product and load after the product page finishes rendering. Keep each video under 20 MB.
                 </p>
 
                 {productForm.images.length > 0 && (
