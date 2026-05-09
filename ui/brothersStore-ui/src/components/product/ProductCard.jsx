@@ -9,16 +9,21 @@ import { getDiscountPercent } from "../../lib/storeApi";
 import Rating from "../common/Rating";
 
 function ProductCard({ product }) {
+  if (!product) {
+    return null;
+  }
+
   const navigate = useNavigate();
   const { cart, addToCart, decreaseQuantity } = useCart();
   const { wishlist, toggleWishlist } = useWishlist();
 
   const isWishlisted = wishlist.find((item) => item.id === product.id);
   const image = product.images?.[0];
-  const isOutOfStock = product.stock <= 0;
+  const isOutOfStock = (product.stock ?? 0) <= 0;
   const cartItem = cart.find((item) => item.id === product.id);
   const cartQuantity = cartItem?.quantity ?? 0;
-  const discountPercent = product.discountPercent || getDiscountPercent(product.oldPrice, product.price);
+  const discountPercent =
+    product.discountPercent ?? getDiscountPercent(product.oldPrice, product.price);
 
   const goToDetails = () => navigate(`/product/${product.id}`);
   const stopPropagation = (event) => event.stopPropagation();

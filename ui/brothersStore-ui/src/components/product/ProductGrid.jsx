@@ -1,8 +1,9 @@
 import ProductCard from "./ProductCard";
 
-export default function ProductGrid({ products }) {
+export default function ProductGrid({ products = [] }) {
+  const safeProducts = Array.isArray(products) ? products.filter(Boolean) : [];
 
-  if (products.length === 0) {
+  if (safeProducts.length === 0) {
     return (
       <p className="text-center text-gray-500">
         No products found
@@ -14,7 +15,7 @@ export default function ProductGrid({ products }) {
 
     <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:gap-6 md:grid-cols-3 xl:grid-cols-4">
 
-      {products.map(product => (
+      {safeProducts.map((product) => (
         <div key={product.id}>
           <ProductCard product={product} />
         </div>
