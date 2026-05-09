@@ -118,8 +118,21 @@ public class OrdersController : ControllerBase
             .AnyAsync(order => order.CustomerEmail == userEmail);
 
         var originalTotalAmount = cartItems.Sum(item => item.Price * item.Quantity);
-        var discountAmount = !hasPreviousOrders ? Math.Min(50m, originalTotalAmount) : 0m;
-        var finalTotalAmount = Math.Max(0m, originalTotalAmount - discountAmount);
+        var firstOrderDiscountAmount = !hasPreviousOrders ? Math.Min(50m, originalTotalAmount) : 0m;
+        var subtotalAfterFirstDiscount = Math.Max(0m, originalTotalAmount - firstOrderDiscountAmount);
+
+        var paymentMethod = request.PaymentMethod?.Trim() ?? "Cash on Delivery";
+        var isPrepaid = paymentMethod.StartsWith("Prepaid", StringComparison.OrdinalIgnoreCase)
+            || paymentMethod.Contains("Online", StringComparison.OrdinalIgnoreCase)
+            || paymentMethod.Contains("Razorpay", StringComparison.OrdinalIgnoreCase)
+            || paymentMethod.Contains("UPI", StringComparison.OrdinalIgnoreCase);
+
+        var totalQuantity = cartItems.Sum(item => item.Quantity);
+        var prepaidDiscountAmount = isPrepaid
+            ? Math.Min(totalQuantity * 30m, subtotalAfterFirstDiscount)
+            : 0m;
+
+        var finalTotalAmount = Math.Max(0m, subtotalAfterFirstDiscount - prepaidDiscountAmount);
 
         var order = new Order
         {
@@ -129,7 +142,7 @@ public class OrdersController : ControllerBase
             CustomerMobile = mobileDigits,
             CustomerEmail = request.CustomerEmail?.Trim() ?? userEmail,
             ShippingAddress = request.ShippingAddress?.Trim() ?? "",
-            PaymentMethod = request.PaymentMethod?.Trim() ?? "Cash on Delivery",
+            PaymentMethod = paymentMethod,
             Status = "Pending",
             TotalAmount = finalTotalAmount,
             CreatedAt = DateTime.UtcNow,
@@ -169,8 +182,10 @@ public class OrdersController : ControllerBase
             order.CreatedAt,
             items = order.Items,
             originalTotalAmount,
-            discountAmount,
-            firstOrderDiscountApplied = discountAmount > 0,
+            firstOrderDiscountAmount,
+            prepaidDiscountAmount,
+            firstOrderDiscountApplied = firstOrderDiscountAmount > 0,
+            prepaidDiscountApplied = prepaidDiscountAmount > 0,
         });
     }
 

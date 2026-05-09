@@ -7,10 +7,13 @@ import {
   FiMapPin,
   FiMinus,
   FiPlus,
+  FiShield,
+  FiTag,
+  FiTruck,
   FiTrash2,
   FiX,
 } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import AddressForm from "../../components/common/AddressForm";
 import Navbar from "../../components/layout/Navbar";
@@ -18,6 +21,12 @@ import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
 import { useProducts } from "../../context/ProductsContext";
+import {
+  createRazorpayOrder,
+  loadRazorpayCheckout,
+  openRazorpayCheckout,
+  verifyRazorpayPayment,
+} from "../../lib/razorpay";
 import {
   formatAddressForOrder,
   normalizeAddressBook,
@@ -30,9 +39,11 @@ const formatPrice = (amount) => `Rs. ${amount.toLocaleString("en-IN")}`;
 
 export default function CartPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const {
     profile,
     isAuthenticated,
+    token,
     openAuthModal,
     saveAddress,
     setDefaultAddress,
@@ -66,8 +77,20 @@ export default function CartPage() {
   const [confirmOrderOpen, setConfirmOrderOpen] = useState(false);
   const [successOrder, setSuccessOrder] = useState(null);
   const [addressFormDirty, setAddressFormDirty] = useState(false);
+  const [paymentMode, setPaymentMode] = useState("cod");
   const autoSaveTimeoutRef = useRef(null);
   const keepAddressFormOpenRef = useRef(savedAddresses.length === 0);
+
+  useEffect(() => {
+    const payMode = searchParams.get("pay");
+    if (payMode === "prepaid") {
+      setPaymentMode("prepaid");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const prepaidDiscountAmount = paymentMode === "prepaid" ? cartQuantity * 30 : 0;
+  const payableAmount = Math.max(0, cartTotal - prepaidDiscountAmount);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -264,6 +287,93 @@ export default function CartPage() {
     }
   };
 
+  const handlePayOnline = async () => {
+    if (!isAuthenticated) {
+      openAuthModal?.();
+      return;
+    }
+
+    const fieldErrors = validateAddressFields(deliveryAddress);
+    const addressError = Object.values(fieldErrors).find(Boolean) ?? "";
+
+    if (addressError) {
+      setAddressErrors(fieldErrors);
+      setCheckoutError("");
+      return;
+    }
+
+    setAddressErrors({});
+
+    const savedAddress = handleSaveAddress();
+
+    if (!savedAddress) {
+      return;
+    }
+
+    const shippingAddress = formatAddressForOrder(savedAddress);
+
+    setPlacingOrder(true);
+
+    try {
+      const canLoad = await loadRazorpayCheckout();
+      if (!canLoad) {
+        throw new Error("Unable to load payment SDK. Please try again.");
+      }
+
+      const orderData = await createRazorpayOrder({
+        token,
+        customer: {
+          name: savedAddress.fullName,
+          email: profile.email,
+          mobile: savedAddress.mobile,
+        },
+      });
+
+      await new Promise((resolve, reject) => {
+        openRazorpayCheckout({
+          key: orderData.keyId,
+          amount: orderData.amount,
+          currency: orderData.currency,
+          orderId: orderData.razorpayOrderId,
+          merchantName: orderData.merchantName ?? "Brothers Store",
+          description: "Prepaid order payment",
+          customer: orderData.customer,
+          onSuccess: async (response) => {
+            try {
+              await verifyRazorpayPayment({
+                token,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              });
+
+              const placed = await placeOrder({
+                shippingAddress,
+                paymentMethod: "Prepaid (Razorpay UPI)",
+                customerName: savedAddress.fullName,
+                customerMobile: savedAddress.mobile,
+                customerEmail: profile.email,
+              });
+
+              setCheckoutError("");
+              setSuccessOrder(placed);
+              refreshCart().catch(() => {
+              });
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          },
+          onDismiss: () => reject(new Error("Payment cancelled.")),
+        });
+      });
+    } catch (error) {
+      setCheckoutError(error.message || "Unable to process online payment.");
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
+
   const handleClearCart = async () => {
     try {
       await clearCart();
@@ -435,9 +545,72 @@ export default function CartPage() {
                   <span>Total amount</span>
                   <span>{formatPrice(cartTotal)}</span>
                 </div>
+
+                {paymentMode === "prepaid" && prepaidDiscountAmount > 0 && (
+                  <div className="flex justify-between text-sm font-semibold text-emerald-700">
+                    <span>Prepaid discount (Rs. 30 × {cartQuantity})</span>
+                    <span>-{formatPrice(prepaidDiscountAmount)}</span>
+                  </div>
+                )}
+
+                {paymentMode === "prepaid" && prepaidDiscountAmount > 0 && (
+                  <div className="flex justify-between border-t border-gray-100 pt-3 text-base font-bold text-gray-900">
+                    <span>Payable now</span>
+                    <span>{formatPrice(payableAmount)}</span>
+                  </div>
+                )}
               </div>
 
               <div className="mt-5">
+                <h3 className="text-sm font-bold text-gray-900">Payment</h3>
+                <div className="mt-3 grid gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("cod")}
+                    className={`flex items-start gap-3 rounded-lg border px-3 py-3 text-left transition ${
+                      paymentMode === "cod"
+                        ? "border-slate-900 bg-slate-50"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                    aria-pressed={paymentMode === "cod"}
+                  >
+                    <span className="mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-400">
+                      {paymentMode === "cod" && <span className="h-2 w-2 rounded-full bg-slate-900" />}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900">Cash on Delivery</p>
+                      <p className="mt-0.5 text-xs font-medium text-slate-600">
+                        Pay when you receive the order
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("prepaid")}
+                    className={`flex items-start gap-3 rounded-lg border px-3 py-3 text-left transition ${
+                      paymentMode === "prepaid"
+                        ? "border-emerald-700 bg-emerald-50"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                    aria-pressed={paymentMode === "prepaid"}
+                  >
+                    <span className="mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-400">
+                      {paymentMode === "prepaid" && <span className="h-2 w-2 rounded-full bg-emerald-700" />}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900">Pay Online (UPI / Cards)</p>
+                      <p className="mt-0.5 text-xs font-medium text-emerald-700">
+                        Save Rs. 30 off per item
+                      </p>
+                      <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-600">
+                        <FiShield className="shrink-0" />
+                        RAZORPAY – Secure Online Payments
+                      </p>
+                    </div>
+                  </button>
+                </div>
+
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-bold text-gray-900">
                     Delivery address
@@ -562,9 +735,26 @@ export default function CartPage() {
                 </p>
               )}
 
+              {paymentMode === "prepaid" && (
+                <div className="mt-4 space-y-2 text-sm font-medium text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <FiTruck className="shrink-0 text-slate-500" />
+                    <span>FREE Shipping &amp; Delivery in 2–3 Days</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FiShield className="shrink-0 text-slate-500" />
+                    <span>RAZORPAY – Secure Online Payments</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FiTag className="shrink-0 text-slate-500" />
+                    <span>Save Rs. 30 off per item on prepaid orders</span>
+                  </div>
+                </div>
+              )}
+
               <button
                 type="button"
-                onClick={handlePlaceCodOrder}
+                onClick={paymentMode === "cod" ? handlePlaceCodOrder : handlePayOnline}
                 disabled={placingOrder}
                 className="cod-button mt-5 w-full rounded-lg bg-green-600 py-3 font-semibold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -581,7 +771,11 @@ export default function CartPage() {
                   className="cod-button__spark cod-button__spark--right"
                 />
                 <span className="cod-button__label">
-                  {placingOrder ? "Placing order..." : "Proceed with Cash on Delivery"}
+                  {placingOrder
+                    ? "Placing order..."
+                    : paymentMode === "prepaid"
+                      ? "Pay Online & Save Rs. 30 / item"
+                      : "Proceed with Cash on Delivery"}
                 </span>
               </button>
 

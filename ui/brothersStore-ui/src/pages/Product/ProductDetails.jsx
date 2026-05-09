@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaHeart } from "react-icons/fa";
-import { FiChevronLeft, FiChevronRight, FiMinus, FiPlay, FiPlus } from "react-icons/fi";
+import {
+  FiChevronLeft,
+  FiChevronRight,
+  FiMinus,
+  FiPlay,
+  FiPlus,
+  FiShield,
+  FiTag,
+  FiTruck,
+} from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Rating from "../../components/common/Rating";
@@ -240,7 +249,7 @@ export default function ProductDetails() {
         title: product.title,
         price: product.price,
       });
-      navigate("/cart");
+      navigate("/cart?pay=prepaid");
     } catch (error) {
       window.alert(error.message);
     }
@@ -407,6 +416,21 @@ export default function ProductDetails() {
             )}
           </div>
 
+          <div className="mt-4 space-y-2 text-sm font-medium text-slate-600">
+            <div className="flex items-center gap-2">
+              <FiTruck className="shrink-0 text-slate-500" />
+              <span>FREE Shipping &amp; Delivery in 2–3 Days</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FiShield className="shrink-0 text-slate-500" />
+              <span>RAZORPAY – Secure Online Payments</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FiTag className="shrink-0 text-slate-500" />
+              <span>Save Rs. 30 off per item on prepaid orders</span>
+            </div>
+          </div>
+
           <p className="mt-3 text-sm font-semibold text-green-700">
             {product.stock > 0 ? `${product.stock} pcs left` : "Out of stock"}
           </p>
@@ -467,7 +491,7 @@ export default function ProductDetails() {
                   aria-hidden="true"
                   className="cod-button__spark cod-button__spark--right"
                 />
-                <span className="cod-button__label">Buy (Cash on Delivery)</span>
+                <span className="cod-button__label">Pay Online &amp; Save Rs. 30 / item</span>
               </button>
             </div>
 

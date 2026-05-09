@@ -144,6 +144,7 @@ builder.Services.AddMemoryCache();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.Configure<AdminNotificationOptions>(builder.Configuration.GetSection("AdminNotification"));
 builder.Services.Configure<PublicSiteOptions>(builder.Configuration.GetSection("PublicSite"));
+builder.Services.Configure<RazorpayOptions>(builder.Configuration.GetSection("Razorpay"));
 builder.Services.AddScoped<IOrderEmailNotificationService, OrderEmailNotificationService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
