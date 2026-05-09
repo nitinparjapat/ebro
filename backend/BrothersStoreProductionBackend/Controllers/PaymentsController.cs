@@ -30,6 +30,20 @@ public class PaymentsController : ControllerBase
         this.db = db;
         this.httpClientFactory = httpClientFactory;
         this.razorpayOptions = razorpayOptions.Value;
+
+        // Support both Razorpay__KeyId style and RAZORPAY_KEY_ID style env vars.
+        // Never expose the secret to the frontend.
+        this.razorpayOptions.KeyId = string.IsNullOrWhiteSpace(this.razorpayOptions.KeyId)
+            ? Environment.GetEnvironmentVariable("RAZORPAY_KEY_ID")?.Trim() ?? ""
+            : this.razorpayOptions.KeyId;
+
+        this.razorpayOptions.KeySecret = string.IsNullOrWhiteSpace(this.razorpayOptions.KeySecret)
+            ? Environment.GetEnvironmentVariable("RAZORPAY_KEY_SECRET")?.Trim() ?? ""
+            : this.razorpayOptions.KeySecret;
+
+        this.razorpayOptions.MerchantName = string.IsNullOrWhiteSpace(this.razorpayOptions.MerchantName)
+            ? Environment.GetEnvironmentVariable("RAZORPAY_MERCHANT_NAME")?.Trim() ?? "Brothers Store"
+            : this.razorpayOptions.MerchantName;
     }
 
     [HttpPost("razorpay/order")]
