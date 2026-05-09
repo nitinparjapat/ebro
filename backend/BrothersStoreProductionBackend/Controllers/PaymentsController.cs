@@ -81,6 +81,10 @@ public class PaymentsController : ControllerBase
         var finalTotalAmount = Math.Max(0m, subtotalAfterFirstDiscount - prepaidDiscountAmount);
 
         var amountInPaise = (int)Math.Round(finalTotalAmount * 100m, MidpointRounding.AwayFromZero);
+        if (amountInPaise < 100)
+        {
+            return BadRequest(new { message = "Minimum payable amount is Rs. 1." });
+        }
 
         var receipt = $"bs_{Guid.NewGuid():N}".Substring(0, 18);
 
@@ -152,6 +156,39 @@ public class PaymentsController : ControllerBase
         });
     }
 
+    // Compatibility endpoint for simple integrations.
+    // Mirrors Razorpay docs: create order -> return { order_id, amount, currency }.
+    [HttpPost("/api/create-order")]
+    [EnableRateLimiting("write")]
+    public async Task<IActionResult> CreateOrderCompat([FromBody] RazorpayCompatCreateOrderRequest request)
+    {
+        var result = await CreateRazorpayOrder(new RazorpayOrderRequest
+        {
+            CustomerName = request.CustomerName,
+            CustomerEmail = request.CustomerEmail,
+            CustomerMobile = request.CustomerMobile,
+        });
+
+        if (result is not OkObjectResult okResult || okResult.Value == null)
+        {
+            return result;
+        }
+
+        // Extract subset expected by docs.
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(okResult.Value));
+        var root = json.RootElement;
+        var orderId = root.GetProperty("razorpayOrderId").GetString() ?? "";
+        var amount = root.GetProperty("amount").GetInt32();
+        var currency = root.GetProperty("currency").GetString() ?? "INR";
+
+        return Ok(new
+        {
+            order_id = orderId,
+            amount,
+            currency,
+        });
+    }
+
     [HttpPost("razorpay/verify")]
     [EnableRateLimiting("write")]
     public IActionResult VerifyRazorpaySignature([FromBody] RazorpayVerifyRequest request)
@@ -177,6 +214,20 @@ public class PaymentsController : ControllerBase
         }
 
         return Ok(new { verified = true });
+    }
+
+    // Compatibility endpoint for simple integrations.
+    // Mirrors Razorpay docs: verify signature -> return success only when matched.
+    [HttpPost("/api/verify-payment")]
+    [EnableRateLimiting("write")]
+    public IActionResult VerifyPaymentCompat([FromBody] RazorpayCompatVerifyRequest request)
+    {
+        return VerifyRazorpaySignature(new RazorpayVerifyRequest
+        {
+            RazorpayOrderId = request.RazorpayOrderId ?? request.Razorpay_Order_Id ?? "",
+            RazorpayPaymentId = request.RazorpayPaymentId ?? request.Razorpay_Payment_Id ?? "",
+            RazorpaySignature = request.RazorpaySignature ?? "",
+        });
     }
 
     private static string ComputeHmacSha256Hex(string secret, string payload)
@@ -215,3 +266,18 @@ public class RazorpayVerifyRequest
     public string RazorpaySignature { get; set; } = "";
 }
 
+public class RazorpayCompatCreateOrderRequest
+{
+    public string? CustomerName { get; set; }
+    public string? CustomerEmail { get; set; }
+    public string? CustomerMobile { get; set; }
+}
+
+public class RazorpayCompatVerifyRequest
+{
+    public string? RazorpayOrderId { get; set; }
+    public string? RazorpayPaymentId { get; set; }
+    public string? Razorpay_Order_Id { get; set; }
+    public string? Razorpay_Payment_Id { get; set; }
+    public string? RazorpaySignature { get; set; }
+}

@@ -2,6 +2,8 @@ run-logs/
 **/.vs/
 **/bin/
 **/obj/
+**/.env
+**/.env.*
 ui/brothersStore-ui/node_modules/
 ui/brothersStore-ui/dist/
 ui/brothersStore-ui/.git.backup/

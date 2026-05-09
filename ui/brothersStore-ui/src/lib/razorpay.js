@@ -110,7 +110,14 @@ export const openRazorpayCheckout = ({
   };
 
   const instance = new window.Razorpay(options);
+  instance.on("payment.failed", (event) => {
+    const description =
+      event?.error?.description ||
+      event?.error?.reason ||
+      event?.error?.code ||
+      "Payment failed.";
+    onDismiss?.(new Error(description));
+  });
   instance.open();
   return instance;
 };
-
