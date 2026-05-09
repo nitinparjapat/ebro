@@ -67,6 +67,43 @@
   }
 }
 
+@keyframes successOrderModalIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes successOrderBadgePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.22);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 18px rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes successOrderConfettiFloat {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -14px, 0) scale(0.6) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.18;
+    transform: translate3d(0, 18px, 0) scale(1.08) rotate(18deg);
+  }
+}
+
 .cod-button {
   position: relative;
   overflow: hidden;
@@ -194,11 +231,46 @@
   animation-delay: 0.8s;
 }
 
+.success-order-modal {
+  animation: successOrderModalIn 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.success-order-badge {
+  animation: successOrderBadgePulse 1.8s ease-in-out infinite;
+}
+
+.success-order-confetti {
+  animation: successOrderConfettiFloat 1.8s ease-in-out infinite;
+}
+
+.success-order-confetti--delay-1 {
+  animation-delay: 0.18s;
+}
+
+.success-order-confetti--delay-2 {
+  animation-delay: 0.32s;
+}
+
+.success-order-confetti--delay-3 {
+  animation-delay: 0.48s;
+}
+
+.success-order-confetti--delay-4 {
+  animation-delay: 0.62s;
+}
+
+.success-order-confetti--delay-5 {
+  animation-delay: 0.78s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cod-button,
   .cod-button::before,
   .cod-button::after,
-  .cod-button__spark {
+  .cod-button__spark,
+  .success-order-modal,
+  .success-order-badge,
+  .success-order-confetti {
     animation: none;
   }
 }

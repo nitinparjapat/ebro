@@ -14,19 +14,34 @@ const sanitizeImages = (images) => {
 
 const sanitizeMedia = (media) => (Array.isArray(media) ? media.filter(Boolean) : []);
 
+export const getDiscountPercent = (originalPrice, finalPrice) => {
+  const original = toNumber(originalPrice);
+  const finalAmount = toNumber(finalPrice);
+
+  if (original <= 0 || original <= finalAmount) {
+    return 0;
+  }
+
+  return Math.round(((original - finalAmount) / original) * 100);
+};
+
 export const normalizeProduct = (product) => {
   const price = toNumber(product?.price);
+  const originalPrice = toNumber(product?.originalPrice || product?.oldPrice || price);
   const images = product?.images?.length
     ? sanitizeImages(product.images)
     : sanitizeImages([product?.primaryImageUrl]);
   const videos = sanitizeMedia(product?.videos);
+  const discountPercent = getDiscountPercent(originalPrice, price);
 
   return {
     id: product?.id ?? 0,
     title: product?.name ?? "Untitled Product",
     description: product?.description ?? "",
     price,
-    oldPrice: Math.round(price * 1.18),
+    originalPrice,
+    oldPrice: originalPrice,
+    discountPercent,
     rating: Number((4 + ((product?.id ?? 1) % 5) * 0.14).toFixed(1)),
     reviews: 45 + (product?.id ?? 1) * 13,
     category: product?.categoryName ?? "Uncategorized",
@@ -56,6 +71,7 @@ export const buildProductPayload = (product) => {
   return {
     name: product.title?.trim() ?? product.name?.trim() ?? "",
     description: product.description?.trim() ?? "",
+    originalPrice: toNumber(product.originalPrice || product.oldPrice || product.price),
     price: toNumber(product.price),
     categoryName: product.category?.trim() ?? product.categoryName?.trim() ?? "",
     categoryId: toNumber(product.categoryId),

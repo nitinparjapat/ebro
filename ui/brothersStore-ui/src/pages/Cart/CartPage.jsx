@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { FiChevronDown, FiChevronUp, FiEdit3, FiMapPin, FiMinus, FiPlus, FiTrash2, FiX } from "react-icons/fi";
+import {
+  FiCheck,
+  FiChevronDown,
+  FiChevronUp,
+  FiEdit3,
+  FiMapPin,
+  FiMinus,
+  FiPlus,
+  FiTrash2,
+  FiX,
+} from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 import AddressForm from "../../components/common/AddressForm";
@@ -55,6 +65,7 @@ export default function CartPage() {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [confirmOrderOpen, setConfirmOrderOpen] = useState(false);
   const [successOrder, setSuccessOrder] = useState(null);
+  const [addressFormDirty, setAddressFormDirty] = useState(false);
   const autoSaveTimeoutRef = useRef(null);
   const keepAddressFormOpenRef = useRef(savedAddresses.length === 0);
 
@@ -68,7 +79,11 @@ export default function CartPage() {
 
       if (selectedAddress) {
         setSelectedAddressId(selectedAddress.id);
-        setDeliveryAddress(selectedAddress);
+        setDeliveryAddress((currentAddress) =>
+          keepAddressFormOpenRef.current && addressFormDirty
+            ? currentAddress
+            : selectedAddress
+        );
         setAddressFormExpanded(keepAddressFormOpenRef.current);
         return;
       }
@@ -93,6 +108,7 @@ export default function CartPage() {
     setAddressFormExpanded(false);
     setCheckoutError("");
     setAddressErrors({});
+    setAddressFormDirty(false);
   };
 
   const handleNewAddress = () => {
@@ -109,6 +125,7 @@ export default function CartPage() {
     setAddressFormExpanded(true);
     setCheckoutError("");
     setAddressErrors({});
+    setAddressFormDirty(false);
   };
 
   const handleEditAddress = (address) => {
@@ -118,6 +135,7 @@ export default function CartPage() {
     setAddressFormExpanded(true);
     setCheckoutError("");
     setAddressErrors({});
+    setAddressFormDirty(false);
   };
 
   const handleSaveAddress = () => {
@@ -144,11 +162,12 @@ export default function CartPage() {
     setAddressFormExpanded(false);
     setCheckoutError("");
     setAddressErrors({});
+    setAddressFormDirty(false);
     return savedAddress;
   };
 
   useEffect(() => {
-    if (!addressFormExpanded || placingOrder) {
+    if (!addressFormExpanded || placingOrder || !addressFormDirty) {
       return;
     }
 
@@ -169,6 +188,7 @@ export default function CartPage() {
       if (savedAddress.isDefault || savedAddresses.length === 0) {
         setDefaultAddress(savedAddress.id);
       }
+      setAddressFormDirty(false);
       setCheckoutError("");
     }, 600);
 
@@ -179,12 +199,18 @@ export default function CartPage() {
     };
   }, [
     addressFormExpanded,
+    addressFormDirty,
     deliveryAddress,
     placingOrder,
     saveAddress,
     savedAddresses.length,
     setDefaultAddress,
   ]);
+
+  const handleDeliveryAddressChange = (nextAddress) => {
+    setDeliveryAddress(nextAddress);
+    setAddressFormDirty(true);
+  };
 
   const handlePlaceCodOrder = async () => {
     if (!isAuthenticated) {
@@ -515,7 +541,7 @@ export default function CartPage() {
                     <div className="mt-3">
                       <AddressForm
                         value={deliveryAddress}
-                        onChange={setDeliveryAddress}
+                        onChange={handleDeliveryAddressChange}
                         disabled={placingOrder}
                         showLabel
                         showDefaultToggle={savedAddresses.length > 0}
@@ -600,11 +626,11 @@ export default function CartPage() {
 
       {successOrder && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/60 px-4">
-          <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] bg-white p-6 text-center shadow-2xl">
+          <div className="success-order-modal relative w-full max-w-md overflow-hidden rounded-[2rem] bg-white p-6 text-center shadow-2xl">
             <button
               type="button"
               onClick={() => setSuccessOrder(null)}
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+              className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
               aria-label="Close success message"
             >
               <FiX />
@@ -613,28 +639,28 @@ export default function CartPage() {
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               <span className="absolute -top-6 left-8 h-24 w-24 rounded-full bg-amber-100/80 blur-2xl" />
               <span className="absolute -right-8 top-8 h-24 w-24 rounded-full bg-pink-100/80 blur-2xl" />
-              <span className="absolute left-4 top-12 h-3 w-3 rounded-full bg-amber-300 animate-bounce" />
-              <span className="absolute left-12 top-20 h-2 w-6 -rotate-12 rounded-full bg-rose-300 animate-pulse" />
-              <span className="absolute left-20 top-10 h-3 w-3 rounded-full bg-sky-300 animate-ping" />
-              <span className="absolute right-20 top-12 h-3 w-3 rounded-full bg-emerald-300 animate-bounce" />
-              <span className="absolute right-10 top-24 h-2 w-6 rotate-12 rounded-full bg-violet-300 animate-pulse" />
-              <span className="absolute right-14 top-36 h-3 w-3 rounded-full bg-orange-300 animate-ping" />
-              <span className="absolute bottom-24 left-10 h-2 w-7 rotate-45 rounded-full bg-cyan-300 animate-bounce" />
-              <span className="absolute bottom-20 right-12 h-2 w-7 -rotate-45 rounded-full bg-lime-300 animate-pulse" />
+              <span className="success-order-confetti absolute left-4 top-12 h-3 w-3 rounded-full bg-amber-300" />
+              <span className="success-order-confetti success-order-confetti--delay-1 absolute left-12 top-20 h-2 w-6 -rotate-12 rounded-full bg-rose-300" />
+              <span className="success-order-confetti success-order-confetti--delay-2 absolute left-20 top-10 h-3 w-3 rounded-full bg-sky-300" />
+              <span className="success-order-confetti success-order-confetti--delay-3 absolute right-20 top-12 h-3 w-3 rounded-full bg-emerald-300" />
+              <span className="success-order-confetti success-order-confetti--delay-4 absolute right-10 top-24 h-2 w-6 rotate-12 rounded-full bg-violet-300" />
+              <span className="success-order-confetti success-order-confetti--delay-5 absolute right-14 top-36 h-3 w-3 rounded-full bg-orange-300" />
+              <span className="success-order-confetti success-order-confetti--delay-2 absolute bottom-24 left-10 h-2 w-7 rotate-45 rounded-full bg-cyan-300" />
+              <span className="success-order-confetti success-order-confetti--delay-4 absolute bottom-20 right-12 h-2 w-7 -rotate-45 rounded-full bg-lime-300" />
             </div>
 
             <div className="relative">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-4xl shadow-inner shadow-emerald-200">
-                <span aria-hidden="true" className="text-emerald-600">✓</span>
+              <div className="success-order-badge mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-4xl text-emerald-600 shadow-inner shadow-emerald-200">
+                <FiCheck aria-hidden="true" />
               </div>
               <h3 className="mt-5 text-2xl font-bold text-slate-900">
-                Thank you for placing your order
+                Thank you!
               </h3>
               <p className="mt-2 text-sm text-slate-600">
                 Your order {successOrder.code} has been placed successfully.
               </p>
               <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-emerald-600">
-                Celebration unlocked
+                We are getting it ready
               </p>
               <div className="mt-6 grid gap-3">
                 <button
@@ -666,3 +692,4 @@ export default function CartPage() {
     </div>
   );
 }
+

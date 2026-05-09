@@ -16,14 +16,17 @@ public DbSet<OrderItem> OrderItems=>Set<OrderItem>();
 public DbSet<Review> Reviews=>Set<Review>();
 public DbSet<Address> Addresses=>Set<Address>();
 public DbSet<User> Users=>Set<User>();
+public DbSet<WebsiteVisit> WebsiteVisits=>Set<WebsiteVisit>();
 
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
 base.OnModelCreating(modelBuilder);
 
+modelBuilder.Entity<Product>().Property(p=>p.OriginalPrice).HasPrecision(18,2);
 modelBuilder.Entity<Product>().Property(p=>p.Price).HasPrecision(18,2);
 modelBuilder.Entity<Order>().Property(o=>o.TotalAmount).HasPrecision(18,2);
 modelBuilder.Entity<OrderItem>().Property(o=>o.Price).HasPrecision(18,2);
+modelBuilder.Entity<WebsiteVisit>().HasIndex(visit=>new { visit.ClientKey, visit.VisitDateUtc });
 }
 
 }

@@ -36,7 +36,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServe
 {
     options.Limits.MaxConcurrentConnections = 200;
     options.Limits.MaxConcurrentUpgradedConnections = 100;
-    options.Limits.MaxRequestBodySize = 20 * 1024 * 1024;
+    options.Limits.MaxRequestBodySize = 50 * 1024 * 1024;
     options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(15);
 });
 

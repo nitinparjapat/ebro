@@ -140,6 +140,10 @@ export function ProductsProvider({ children }) {
       throw new Error("Enter a valid product price.");
     }
 
+    if (payload.originalPrice < payload.price) {
+      throw new Error("Main price must be greater than or equal to discounted price.");
+    }
+
     if (payload.stock < 0) {
       throw new Error("Stock cannot be negative.");
     }

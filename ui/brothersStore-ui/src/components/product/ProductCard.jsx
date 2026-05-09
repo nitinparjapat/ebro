@@ -5,6 +5,7 @@ import { FiMinus, FiPlus } from "react-icons/fi";
 
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
+import { getDiscountPercent } from "../../lib/storeApi";
 import Rating from "../common/Rating";
 
 function ProductCard({ product }) {
@@ -17,6 +18,7 @@ function ProductCard({ product }) {
   const isOutOfStock = product.stock <= 0;
   const cartItem = cart.find((item) => item.id === product.id);
   const cartQuantity = cartItem?.quantity ?? 0;
+  const discountPercent = product.discountPercent || getDiscountPercent(product.oldPrice, product.price);
 
   const goToDetails = () => navigate(`/product/${product.id}`);
   const stopPropagation = (event) => event.stopPropagation();
@@ -98,13 +100,20 @@ function ProductCard({ product }) {
         <div className="mt-1 flex items-center gap-2">
           <span className="text-xl font-black leading-none text-slate-900 sm:text-lg">Rs. {product.price.toLocaleString("en-IN")}</span>
 
-          <span className="text-xs text-gray-400 line-through">
-            Rs. {product.oldPrice.toLocaleString("en-IN")}
-          </span>
+          {product.oldPrice > product.price && (
+            <>
+              <span className="text-xs text-gray-400 line-through">
+                Rs. {product.oldPrice.toLocaleString("en-IN")}
+              </span>
+              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+                {discountPercent}% OFF
+              </span>
+            </>
+          )}
         </div>
 
         <p className={`mt-1 text-xs font-medium ${isOutOfStock ? "text-red-600" : "text-green-700"}`}>
-          {isOutOfStock ? "Out of stock" : `${product.stock} left in stock`}
+          {isOutOfStock ? "Out of stock" : `${product.stock} pcs left`}
         </p>
 
         <div className="mt-3 grid gap-2">

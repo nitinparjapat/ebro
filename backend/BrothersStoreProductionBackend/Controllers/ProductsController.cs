@@ -41,6 +41,7 @@ public class ProductsController : ControllerBase
                 product.Id,
                 product.Name,
                 product.Description,
+                product.OriginalPrice,
                 product.Price,
                 product.Stock,
                 product.CategoryName,
@@ -55,6 +56,7 @@ public class ProductsController : ControllerBase
             Id = product.Id,
             Name = product.Name,
             Description = product.Description,
+            OriginalPrice = product.OriginalPrice,
             Price = product.Price,
             Stock = product.Stock,
             CategoryName = product.CategoryName,
@@ -213,6 +215,7 @@ public class ProductsController : ControllerBase
 
         product.Name = request.Name?.Trim() ?? "";
         product.Description = request.Description?.Trim() ?? "";
+        product.OriginalPrice = request.OriginalPrice > 0 ? request.OriginalPrice : request.Price;
         product.Price = request.Price;
         product.Stock = request.Stock;
         product.CategoryName = request.CategoryName?.Trim() ?? "";
@@ -255,6 +258,7 @@ public class ProductUpsertRequest
 {
     public string Name { get; set; } = "";
     public string Description { get; set; } = "";
+    public decimal OriginalPrice { get; set; }
     public decimal Price { get; set; }
     public int Stock { get; set; }
     public string CategoryName { get; set; } = "";
@@ -275,6 +279,7 @@ public class ProductResponse
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Description { get; set; } = "";
+    public decimal OriginalPrice { get; set; }
     public decimal Price { get; set; }
     public int Stock { get; set; }
     public string CategoryName { get; set; } = "";

@@ -22,12 +22,14 @@ import { useAuth } from "../../context/AuthContext";
 import { useOrders } from "../../context/OrdersContext";
 import { useProducts } from "../../context/ProductsContext";
 import { useReviews } from "../../context/ReviewsContext";
+import { apiClient, createAuthHeaders } from "../../lib/api";
 
 const emptyProductForm = {
   id: null,
   title: "",
   category: "",
   description: "",
+  originalPrice: "",
   price: "",
   stock: "",
   images: [],
@@ -68,6 +70,7 @@ const productToForm = (product) => ({
   title: product.title,
   category: product.category,
   description: product.description,
+  originalPrice: String(product.originalPrice ?? product.oldPrice ?? product.price),
   price: String(product.price),
   stock: String(product.stock),
   images: product.images ?? [],
@@ -91,6 +94,7 @@ export default function OwnerDashboard() {
     isAdmin,
     isAuthenticated,
     openAuthModal,
+    token,
   } = useAuth();
   const {
     products,
@@ -119,6 +123,10 @@ export default function OwnerDashboard() {
   const [dashboardMessage, setDashboardMessage] = useState("");
   const [dashboardError, setDashboardError] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [visitorStats, setVisitorStats] = useState({
+    uniqueVisitors: 0,
+    totalVisitors: 0,
+  });
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -127,6 +135,22 @@ export default function OwnerDashboard() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isAdmin) {
+      return;
+    }
+
+    apiClient.get("/analytics/summary", {
+      headers: createAuthHeaders(token),
+    }).then(({ data }) => {
+      setVisitorStats({
+        uniqueVisitors: Number(data?.uniqueVisitors ?? 0),
+        totalVisitors: Number(data?.totalVisitors ?? 0),
+      });
+    }).catch(() => {
+    });
+  }, [isAdmin, isAuthenticated, token]);
 
   const stats = useMemo(() => {
     const activeProducts = products.filter((product) => product.isActive);
@@ -254,7 +278,7 @@ export default function OwnerDashboard() {
         file.type.startsWith("video/")
       );
       const oversizedVideo = videoFiles.find(
-        (file) => file.size > 8 * 1024 * 1024
+        (file) => file.size > 20 * 1024 * 1024
       );
       const selectedVideoSize = videoFiles.reduce(
         (totalSize, file) => totalSize + file.size,
@@ -263,14 +287,14 @@ export default function OwnerDashboard() {
 
       if (oversizedVideo) {
         setDashboardError(
-          `${oversizedVideo.name} is too large. Keep each video under 8 MB for smooth product pages.`
+          `${oversizedVideo.name} is too large. Keep each video under 20 MB.`
         );
         return;
       }
 
-      if (selectedVideoSize > 12 * 1024 * 1024) {
+      if (selectedVideoSize > 40 * 1024 * 1024) {
         setDashboardError(
-          "Selected videos are too large together. Keep total video upload under 12 MB per save."
+          "Selected videos are too large together. Keep total video upload under 40 MB per save."
         );
         return;
       }
@@ -332,6 +356,7 @@ export default function OwnerDashboard() {
     try {
       const savedProduct = await saveProduct({
         ...productForm,
+        originalPrice: Number(productForm.originalPrice || productForm.price),
         price: Number(productForm.price),
         stock: Number(productForm.stock),
         images: productForm.images.map((image) => image.src ?? image),
@@ -472,6 +497,15 @@ export default function OwnerDashboard() {
                 refreshOwnerOrders().catch((refreshError) =>
                   setDashboardError(refreshError.message)
                 );
+                apiClient.get("/analytics/summary", {
+                  headers: createAuthHeaders(token),
+                }).then(({ data }) => {
+                  setVisitorStats({
+                    uniqueVisitors: Number(data?.uniqueVisitors ?? 0),
+                    totalVisitors: Number(data?.totalVisitors ?? 0),
+                  });
+                }).catch(() => {
+                });
               }}
             className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-800"
           >
@@ -480,7 +514,7 @@ export default function OwnerDashboard() {
           </button>
         </header>
 
-        <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
+        <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-9">
           <div className="rounded-lg bg-white p-4 shadow-sm">
             <FiArchive className="text-xl text-gray-500" />
             <p className="mt-3 text-sm text-gray-500">Total products</p>
@@ -534,6 +568,22 @@ export default function OwnerDashboard() {
             <p className="mt-3 text-sm text-gray-500">Pending reviews</p>
             <p className="mt-1 text-2xl font-bold text-gray-900">
               {stats.pendingReviews}
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <FiUsers className="text-xl text-sky-600" />
+            <p className="mt-3 text-sm text-gray-500">Unique visitors</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900">
+              {visitorStats.uniqueVisitors}
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <FiUsers className="text-xl text-cyan-600" />
+            <p className="mt-3 text-sm text-gray-500">Total visitors</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900">
+              {visitorStats.totalVisitors}
             </p>
           </div>
         </section>
@@ -641,10 +691,23 @@ export default function OwnerDashboard() {
                 />
               </label>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <label className="block">
                   <span className="text-sm font-semibold text-gray-700">
-                    Price
+                    Main price
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={productForm.originalPrice}
+                    onChange={(event) => updateForm("originalPrice", event.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-gray-700">
+                    Discounted price
                   </span>
                   <input
                     type="number"
@@ -687,7 +750,7 @@ export default function OwnerDashboard() {
                   />
                 </label>
                 <p className="mt-2 text-xs text-gray-500">
-                  Videos are saved with the product and autoplay muted on the product page. Keep each video under 8 MB.
+                  Videos are saved with the product and autoplay muted on the product page. Keep each video under 20 MB.
                 </p>
 
                 {productForm.images.length > 0 && (
