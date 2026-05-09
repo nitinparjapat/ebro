@@ -2,7 +2,7 @@ const products = [
   {
     id: 1,
     title: "Wooden Wall Shelf",
-    category: "Wall Decor",
+    category: "Home Decos",
     price: 799,
     oldPrice: 1199,
     rating: 4.3,
@@ -17,12 +17,12 @@ const products = [
   {
     id: 2,
     title: "Modern Table Lamp",
-    category: "Lighting",
+    category: "Essentials",
     price: 999,
     oldPrice: 1499,
     rating: 4.6,
     reviews: 89,
-    description: "Elegant table lamp perfect for bedroom decor.",
+    description: "Elegant table lamp perfect for everyday use.",
     images: [
       "https://picsum.photos/600?4",
       "https://picsum.photos/600?5",

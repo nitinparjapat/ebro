@@ -686,7 +686,7 @@ export default function OwnerDashboard() {
                   type="text"
                   value={productForm.category}
                   onChange={(event) => updateForm("category", event.target.value)}
-                  placeholder="Wall Decor, Lighting, Gift Items"
+                  placeholder="Home Decos, Essentials"
                   className={inputClass}
                 />
               </label>

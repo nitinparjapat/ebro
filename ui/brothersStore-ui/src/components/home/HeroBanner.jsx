@@ -18,17 +18,16 @@ export default function HeroBanner() {
           </h2>
 
           <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-700 md:mx-0">
-            Discover decor pieces, statement furniture, and everyday essentials
-            curated for modern Indian homes.
+            Discover home decos and everyday essentials curated for modern Indian homes.
           </p>
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:justify-start">
             <button
               type="button"
-              onClick={() => navigate("/?category=Decor")}
+              onClick={() => navigate("/?category=Home Decos")}
               className="rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5 hover:bg-slate-800"
             >
-              Explore Decor
+              Explore Home Decos
             </button>
             <span className="rounded-xl bg-white/86 px-3 py-2 text-xs font-black text-slate-900 shadow-sm ring-1 ring-black/5">
               70% offers
