@@ -165,7 +165,7 @@ export default function CartPage() {
     setAddressFormDirty(false);
   };
 
-  const handleSaveAddress = () => {
+  const handleSaveAddress = async () => {
     const fieldErrors = validateAddressFields(deliveryAddress);
     const addressError = Object.values(fieldErrors).find(Boolean) ?? "";
 
@@ -175,7 +175,7 @@ export default function CartPage() {
       return null;
     }
 
-    const savedAddress = saveAddress(deliveryAddress);
+    const savedAddress = await saveAddress(deliveryAddress);
     setSelectedAddressId(savedAddress.id);
     setDeliveryAddress({
       ...savedAddress,
@@ -202,21 +202,25 @@ export default function CartPage() {
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    autoSaveTimeoutRef.current = setTimeout(() => {
+    autoSaveTimeoutRef.current = setTimeout(async () => {
       const addressError = validateAddress(deliveryAddress);
 
       if (addressError) {
         return;
       }
 
-      const savedAddress = saveAddress(deliveryAddress);
-      setSelectedAddressId(savedAddress.id);
-      setDeliveryAddress(savedAddress);
-      if (savedAddress.isDefault || savedAddresses.length === 0) {
-        setDefaultAddress(savedAddress.id);
+      try {
+        const savedAddress = await saveAddress(deliveryAddress);
+        setSelectedAddressId(savedAddress.id);
+        setDeliveryAddress(savedAddress);
+        if (savedAddress.isDefault || savedAddresses.length === 0) {
+          setDefaultAddress(savedAddress.id);
+        }
+        setAddressFormDirty(false);
+        setCheckoutError("");
+      } catch (error) {
+        setCheckoutError(error.message || "Unable to save address.");
       }
-      setAddressFormDirty(false);
-      setCheckoutError("");
     }, 600);
 
     return () => {
@@ -263,7 +267,7 @@ export default function CartPage() {
   const handleConfirmPlaceOrder = async () => {
     setConfirmOrderOpen(false);
 
-    const savedAddress = handleSaveAddress();
+    const savedAddress = await handleSaveAddress();
 
     if (!savedAddress) {
       return;
@@ -314,7 +318,7 @@ export default function CartPage() {
     setAddressErrors({});
     setCheckoutNotice("");
 
-    const savedAddress = handleSaveAddress();
+    const savedAddress = await handleSaveAddress();
 
     if (!savedAddress) {
       return;
