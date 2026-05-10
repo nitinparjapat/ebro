@@ -78,6 +78,7 @@ export default function CartPage() {
   const [addressErrors, setAddressErrors] = useState({});
   const [placingOrder, setPlacingOrder] = useState(false);
   const [confirmOrderOpen, setConfirmOrderOpen] = useState(false);
+  const [confirmOrderMode, setConfirmOrderMode] = useState("cod");
   const [successOrder, setSuccessOrder] = useState(null);
   const [addressFormDirty, setAddressFormDirty] = useState(false);
   const [paymentMode, setPaymentMode] = useState("cod");
@@ -298,11 +299,17 @@ export default function CartPage() {
 
     setAddressErrors({});
     setCheckoutNotice("");
+    setConfirmOrderMode("cod");
     setConfirmOrderOpen(true);
   };
 
   const handleConfirmPlaceOrder = async () => {
     setConfirmOrderOpen(false);
+
+    if (confirmOrderMode === "prepaid") {
+      await handlePayOnline(true);
+      return;
+    }
 
     const savedAddress = await handleSaveAddress();
 
@@ -336,7 +343,7 @@ export default function CartPage() {
     }
   };
 
-  const handlePayOnline = async () => {
+  const handlePayOnline = async (skipConfirmation = false) => {
     if (!isAuthenticated) {
       openAuthModal?.();
       return;
@@ -354,6 +361,12 @@ export default function CartPage() {
 
     setAddressErrors({});
     setCheckoutNotice("");
+
+    if (!skipConfirmation) {
+      setConfirmOrderMode("prepaid");
+      setConfirmOrderOpen(true);
+      return;
+    }
 
     const savedAddress = await handleSaveAddress();
 
@@ -877,7 +890,9 @@ export default function CartPage() {
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
             <h3 className="text-lg font-bold text-slate-900">Confirm Order</h3>
             <p className="mt-2 text-sm text-slate-600">
-              Place this cash-on-delivery order now?
+              {confirmOrderMode === "prepaid"
+                ? "Proceed with this prepaid order and continue to payment?"
+                : "Place this cash-on-delivery order now?"}
             </p>
             <div className="mt-5 grid grid-cols-2 gap-2">
               <button
@@ -892,7 +907,7 @@ export default function CartPage() {
                 onClick={handleConfirmPlaceOrder}
                 className="rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white"
               >
-                Yes, Place Order
+                {confirmOrderMode === "prepaid" ? "Yes, Continue" : "Yes, Place Order"}
               </button>
             </div>
           </div>
