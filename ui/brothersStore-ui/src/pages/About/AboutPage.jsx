@@ -140,6 +140,29 @@ export default function AboutPage() {
 
         </section>
 
+        <section className="mx-auto max-w-6xl px-4 pb-12">
+
+          <div className="paper-stack">
+            <div className="genz-paper paper-panel rounded-[2rem] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+              <p className="genz-kicker">Support</p>
+              <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-slate-950">
+                Need help with an order?
+              </h2>
+              <p className="mt-2 text-sm font-semibold text-slate-700">
+                Email us at{" "}
+                <a
+                  className="font-black text-slate-950 underline decoration-slate-900/20 underline-offset-4"
+                  href="mailto:orders.brothersstore@gmail.com"
+                >
+                  orders.brothersstore@gmail.com
+                </a>
+                .
+              </p>
+            </div>
+          </div>
+
+        </section>
+
       </main>
 
     </div>

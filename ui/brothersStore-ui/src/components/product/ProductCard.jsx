@@ -182,18 +182,18 @@ function ProductCard({ product }) {
         <Rating rating={product.rating} />
 
         <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/80 p-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="min-w-0 flex-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
               Discounted price
             </span>
-            <span className="text-lg font-black leading-none text-slate-900">
+            <span className="shrink-0 text-right text-base font-black leading-none text-slate-900 sm:text-lg">
               Rs. {discountedPrice.toLocaleString("en-IN")}
             </span>
           </div>
 
           {hasDiscount && (
-            <div className="mt-2 flex items-center justify-between gap-3 text-xs">
-              <span className="text-slate-500">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="min-w-0 text-slate-500">
                 Main price:
                 {" "}
                 <span className="font-semibold line-through">

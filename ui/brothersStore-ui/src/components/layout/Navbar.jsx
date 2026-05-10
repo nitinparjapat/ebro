@@ -57,14 +57,14 @@ export default function Navbar() {
     <>
       <MobileDrawer open={drawerOpen} setOpen={setDrawerOpen} />
 
-      <div className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/92 shadow-[0_10px_24px_rgba(15,23,42,0.05)] backdrop-blur">
+      <div className="sticky top-0 z-40 border-b border-slate-900/10 paper-surface">
 
       <div className="mx-auto max-w-7xl px-4 py-3 md:px-6">
         <div className="flex items-center gap-3 md:gap-5">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-gray-800 md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-800 shadow-sm md:hidden"
             aria-label="Open menu"
           >
             <FiMenu size={22} />
@@ -119,7 +119,7 @@ export default function Navbar() {
           </nav>
 
           {renderSearchInput(
-            "ml-auto hidden flex-1 items-center rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-2.5 md:flex md:max-w-xl"
+            "ml-auto hidden flex-1 items-center rounded-xl border border-slate-900/10 bg-white/70 px-4 py-2.5 shadow-sm md:flex md:max-w-xl"
           )}
 
           <div className="ml-auto flex items-center gap-3 md:ml-0 md:gap-5">
@@ -135,7 +135,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => navigate("/wishlist")}
-              className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-sm font-semibold text-rose-700 md:h-auto md:w-auto md:bg-transparent md:text-gray-700"
+              className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-sm font-semibold text-rose-700 shadow-sm md:h-auto md:w-auto md:bg-transparent md:text-slate-700 md:shadow-none"
             >
               <FaHeart size={18} />
               <span className="hidden md:inline">Wishlist</span>
@@ -149,7 +149,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => navigate("/cart")}
-              className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-sm font-semibold text-white md:h-auto md:w-auto md:bg-transparent md:text-gray-700"
+              className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white shadow-sm md:h-auto md:w-auto md:bg-transparent md:text-slate-700 md:shadow-none"
             >
               <FiShoppingCart size={20} />
               <span className="hidden md:inline">Cart</span>
@@ -164,7 +164,7 @@ export default function Navbar() {
 
         <div className="pt-3 md:hidden">
           {renderSearchInput(
-            "flex items-center rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-3"
+            "flex items-center rounded-xl border border-slate-900/10 bg-white/70 px-4 py-3 shadow-sm"
           )}
         </div>
       </div>

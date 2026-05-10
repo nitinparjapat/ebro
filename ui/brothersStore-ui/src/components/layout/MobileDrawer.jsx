@@ -44,8 +44,9 @@ export default function MobileDrawer({ open, setOpen }) {
         className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
       />
 
-      <div className="absolute right-0 top-0 h-full w-full overflow-y-auto bg-[linear-gradient(180deg,#fffefb_0%,#f8fafc_100%)] shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/80 bg-white/88 px-4 py-3 backdrop-blur">
+      <div className="paper-bg absolute right-0 top-0 h-full w-full overflow-y-auto shadow-2xl">
+        <div className="sticky top-0 z-10 border-b border-slate-900/10 paper-surface">
+          <div className="flex items-center justify-between px-4 py-3">
           <img
             src="/bs_logo_hd.png"
             alt="BrothersStore"
@@ -55,17 +56,19 @@ export default function MobileDrawer({ open, setOpen }) {
           <button
             type="button"
             onClick={closeDrawer}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-gray-700"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-700 shadow-sm"
             aria-label="Close menu"
           >
             <FaTimes className="text-xl" />
           </button>
+          </div>
         </div>
 
         <div className="px-4 py-5">
           {currentUser && (
-            <div className="mb-5 rounded-[1.5rem] bg-[linear-gradient(135deg,#0f172a_0%,#1f2937_100%)] px-4 py-4 text-white shadow-[0_22px_40px_rgba(15,23,42,0.24)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+            <div className="mb-5 genz-tape paper-stack">
+              <div className="genz-paper rounded-[1.8rem] bg-[linear-gradient(135deg,#0f172a_0%,#1f2937_100%)] px-4 py-4 text-white shadow-[0_22px_40px_rgba(15,23,42,0.24)]">
+              <p className="genz-kicker text-white/70">
                 Signed In
               </p>
               <p className="mt-2 text-lg font-bold">
@@ -74,11 +77,13 @@ export default function MobileDrawer({ open, setOpen }) {
               <p className="mt-1 text-sm text-white/80">
                 {currentUser.email || currentUser.phoneNumber}
               </p>
+              </div>
             </div>
           )}
 
-          <div className="rounded-[1.5rem] bg-white/75 p-2 shadow-[0_18px_36px_rgba(15,23,42,0.06)] ring-1 ring-black/5">
-            <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+          <div className="genz-tape paper-stack">
+            <div className="genz-paper paper-panel rounded-[1.8rem] p-2 shadow-[0_18px_36px_rgba(15,23,42,0.06)] ring-1 ring-black/5">
+            <p className="genz-kicker px-3 pb-2 pt-1 text-slate-700">
               Quick Links
             </p>
 
@@ -86,68 +91,69 @@ export default function MobileDrawer({ open, setOpen }) {
               <button
                 type="button"
                 onClick={() => handleNavigate("/")}
-                className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 text-left shadow-sm"
+                className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-3 text-left shadow-sm transition hover:-translate-y-0.5"
               >
                 <span className="flex items-center gap-3">
-                  <FiHome className="text-lg text-gray-700" />
-                  <span className="text-sm font-semibold text-gray-900">Home</span>
+                  <FiHome className="text-lg text-slate-700" />
+                  <span className="text-sm font-black text-slate-950">Home</span>
                 </span>
-                <span className="text-xs text-gray-400">Browse</span>
+                <span className="text-xs font-semibold text-slate-500">Browse</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleNavigate("/wishlist")}
-                className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 text-left shadow-sm"
+                className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-3 text-left shadow-sm transition hover:-translate-y-0.5"
               >
                 <span className="flex items-center gap-3">
-                  <FiHeart className="text-lg text-gray-700" />
-                  <span className="text-sm font-semibold text-gray-900">
+                  <FiHeart className="text-lg text-slate-700" />
+                  <span className="text-sm font-black text-slate-950">
                     Wishlist
                   </span>
                 </span>
-                <span className="text-xs text-gray-400">Saved picks</span>
+                <span className="text-xs font-semibold text-slate-500">Saved picks</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleNavigate("/orders")}
-                className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 text-left shadow-sm"
+                className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-3 text-left shadow-sm transition hover:-translate-y-0.5"
               >
                 <span className="flex items-center gap-3">
-                  <FiPackage className="text-lg text-gray-700" />
-                  <span className="text-sm font-semibold text-gray-900">Orders</span>
+                  <FiPackage className="text-lg text-slate-700" />
+                  <span className="text-sm font-black text-slate-950">Orders</span>
                 </span>
-                <span className="text-xs text-gray-400">Order history</span>
+                <span className="text-xs font-semibold text-slate-500">Order history</span>
               </button>
 
               {showDashboard && (
-                <button
-                  type="button"
-                  onClick={() => handleNavigate("/owner-dashboard")}
-                  className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 text-left shadow-sm"
-                >
-                  <span className="flex items-center gap-3">
-                    <FiGrid className="text-lg text-gray-700" />
-                    <span className="text-sm font-semibold text-gray-900">
-                      Dashboard
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate("/owner-dashboard")}
+                    className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-3 text-left shadow-sm transition hover:-translate-y-0.5"
+                  >
+                    <span className="flex items-center gap-3">
+                      <FiGrid className="text-lg text-slate-700" />
+                      <span className="text-sm font-black text-slate-950">
+                        Dashboard
+                      </span>
                     </span>
-                  </span>
-                  <span className="text-xs text-gray-400">Owner tools</span>
-                </button>
-              )}
+                    <span className="text-xs font-semibold text-slate-500">Owner tools</span>
+                  </button>
+                )}
 
               <button
                 type="button"
                 onClick={() => handleNavigate("/about")}
-                className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 text-left shadow-sm"
+                className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-3 text-left shadow-sm transition hover:-translate-y-0.5"
               >
                 <span className="flex items-center gap-3">
-                  <FiInfo className="text-lg text-gray-700" />
-                  <span className="text-sm font-semibold text-gray-900">About Us</span>
+                  <FiInfo className="text-lg text-slate-700" />
+                  <span className="text-sm font-black text-slate-950">About Us</span>
                 </span>
-                <span className="text-xs text-gray-400">Our story</span>
+                <span className="text-xs font-semibold text-slate-500">Our story</span>
               </button>
+            </div>
             </div>
           </div>
 
