@@ -288,18 +288,20 @@ export default function ProductDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen">
         <Navbar />
-        <p className="mx-auto max-w-6xl p-6 text-gray-500">Loading product...</p>
+        <p className="mx-auto max-w-6xl p-6 font-semibold text-slate-700">
+          Loading product...
+        </p>
       </div>
     );
   }
 
   if (pageError || !product) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen">
         <Navbar />
-        <p className="mx-auto max-w-6xl p-6 text-red-600">
+        <p className="mx-auto max-w-6xl p-6 font-semibold text-red-700">
           {pageError || "Product not found."}
         </p>
       </div>
@@ -307,12 +309,12 @@ export default function ProductDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       <Navbar />
 
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-5 sm:px-6 md:gap-10 md:py-8 lg:grid-cols-[1.02fr_0.98fr]">
         <div>
-          <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
+          <div className="genz-paper paper-panel relative overflow-hidden rounded-[1.75rem]">
             {currentMedia?.type === "video" ? (
               <div className="relative aspect-square w-full bg-black">
                 {shouldLoadActiveVideo ? (
@@ -418,26 +420,26 @@ export default function ProductDetails() {
           )}
         </div>
 
-        <div className="rounded-[1.75rem] bg-white p-6 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
-          <h1 className="text-2xl font-bold">{product.title}</h1>
+        <div className="genz-paper paper-panel rounded-[1.75rem] p-6">
+          <h1 className="text-2xl font-black text-slate-950">{product.title}</h1>
 
-          <p className="mt-2 text-sm font-medium text-gray-500">{product.category}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-700">{product.category}</p>
 
           <Rating rating={product.rating} />
 
-          <p className="text-gray-500">
+          <p className="text-slate-700">
             {approvedReviews.length} approved review
             {approvedReviews.length === 1 ? "" : "s"}
           </p>
 
           <div className="mt-3 flex items-center gap-3">
-            <span className="text-2xl font-bold">
+            <span className="text-2xl font-black text-slate-950">
               Rs. {product.price.toLocaleString("en-IN")}
             </span>
 
             {product.oldPrice > product.price && (
               <>
-                <span className="text-gray-400 line-through">
+                <span className="text-slate-500 line-through">
                   Rs. {product.oldPrice.toLocaleString("en-IN")}
                 </span>
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
@@ -466,11 +468,11 @@ export default function ProductDetails() {
             </div>
           </div>
 
-          <p className="mt-3 text-sm font-semibold text-green-700">
+          <p className="mt-3 text-sm font-bold text-green-800">
             {product.stock > 0 ? `${product.stock} pcs left` : "Out of stock"}
           </p>
 
-          <p className="mt-4 text-gray-600">{product.description}</p>
+          <p className="mt-4 text-slate-700">{product.description}</p>
 
           <div className="mt-6 flex gap-3">
             <div className="grid flex-1 gap-3">

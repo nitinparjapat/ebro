@@ -458,15 +458,20 @@ export default function CartPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       <Navbar />
 
       <main className="mx-auto max-w-5xl px-4 py-5">
+        <div className="paper-stack">
+          <div className="genz-paper paper-panel rounded-[2rem] p-5 md:p-6">
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
+          <p className="genz-kicker">Your Picks</p>
+          <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-slate-950 md:text-3xl">
+            Shopping Cart
+          </h1>
 
           {cartQuantity > 0 && (
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-2 text-sm font-semibold text-slate-700">
               {cartQuantity} item{cartQuantity > 1 ? "s" : ""} in your cart
             </p>
           )}
@@ -883,6 +888,8 @@ export default function CartPage() {
             </aside>
           </div>
         )}
+          </div>
+        </div>
       </main>
 
       {confirmOrderOpen && (

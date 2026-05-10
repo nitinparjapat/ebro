@@ -550,7 +550,7 @@ export default function OwnerDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen">
         <Navbar />
 
         <main className="mx-auto max-w-5xl px-4 py-10">
@@ -576,7 +576,7 @@ export default function OwnerDashboard() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen">
         <Navbar />
 
         <main className="mx-auto max-w-5xl px-4 py-10">
@@ -594,7 +594,7 @@ export default function OwnerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       <Navbar />
 
       <main className="mx-auto max-w-7xl px-4 py-6">

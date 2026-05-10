@@ -5,6 +5,17 @@
   --color-accent: #c9a227;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  color: #0f172a;
+  background-color: #f6f1e7;
+}
+
 .paper-bg {
   background-color: #f6f1e7;
   background-image:

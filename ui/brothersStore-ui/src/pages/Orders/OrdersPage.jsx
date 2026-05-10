@@ -29,22 +29,27 @@ export default function OrdersPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen">
         <Navbar />
 
         <main className="mx-auto max-w-5xl px-4 py-10">
-          <div className="rounded-lg bg-white p-6 text-center shadow-sm">
-            <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
-            <p className="mt-3 text-gray-600">
+          <div className="paper-stack">
+            <div className="genz-paper paper-panel rounded-[2rem] p-6 text-center shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+            <p className="genz-kicker">Order History</p>
+            <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-slate-950 md:text-3xl">
+              My Orders
+            </h1>
+            <p className="mt-3 font-semibold text-slate-700">
               Sign in to track current orders and view your order history.
             </p>
             <button
               type="button"
               onClick={openAuthModal}
-              className="mt-5 rounded-lg bg-black px-5 py-3 font-semibold text-white"
+              className="mt-5 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white shadow-[0_14px_26px_rgba(15,23,42,0.16)]"
             >
               Sign In to Continue
             </button>
+            </div>
           </div>
         </main>
       </div>
@@ -52,69 +57,80 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       <Navbar />
 
       <main className="mx-auto max-w-5xl px-4 py-5">
         <header className="mb-5">
-          <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
+          <div className="paper-stack">
+            <div className="genz-paper paper-panel rounded-[2rem] px-5 py-5 md:px-6">
+              <p className="genz-kicker">Order History</p>
+              <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-slate-950 md:text-3xl">
+                My Orders
+              </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Track all your previous COD purchases in one place.
-          </p>
+              <p className="mt-2 text-sm font-semibold text-slate-700">
+                Track all your previous COD purchases in one place.
+              </p>
+            </div>
+          </div>
         </header>
 
         {placedOrderId && (
-          <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+          <div className="mb-4 rounded-2xl bg-green-50/90 px-4 py-3 text-sm font-bold text-green-800 shadow-sm">
             Order {placedOrderId} placed successfully.
           </div>
         )}
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="mb-4 rounded-2xl bg-red-50/90 px-4 py-3 text-sm font-bold text-red-800 shadow-sm">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="rounded-lg bg-white p-6 text-center shadow-sm">
-            <p className="text-gray-600">Loading your orders...</p>
+          <div className="paper-stack">
+            <div className="genz-paper paper-panel rounded-[2rem] p-6 text-center shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+              <p className="font-semibold text-slate-700">Loading your orders...</p>
+            </div>
           </div>
         ) : orders.length === 0 ? (
-          <div className="rounded-lg bg-white p-6 text-center shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900">No orders yet</h2>
+          <div className="paper-stack">
+            <div className="genz-paper paper-panel rounded-[2rem] p-6 text-center shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+            <h2 className="text-lg font-black text-slate-950">No orders yet</h2>
 
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm font-semibold text-slate-700">
               Once you place a COD order, it will appear here.
             </p>
 
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="mt-5 rounded-lg bg-black px-5 py-3 font-semibold text-white"
+              className="mt-5 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white shadow-[0_14px_26px_rgba(15,23,42,0.16)]"
             >
               Continue Shopping
             </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <article key={order.id} className="rounded-lg bg-white p-4 shadow-sm">
-                <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+              <article key={order.id} className="genz-paper paper-panel rounded-[2rem] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+                <div className="flex flex-col gap-3 border-b border-slate-900/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                    <p className="genz-kicker text-slate-700">
                       Order ID
                     </p>
 
-                    <h2 className="mt-1 text-lg font-bold text-gray-900">
+                    <h2 className="mt-1 text-lg font-black text-slate-950">
                       {order.code}
                     </h2>
 
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm font-semibold text-slate-700">
                       Placed on {formatDate(order.createdAt)}
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm font-semibold text-slate-700">
                       Estimated delivery by {formatDate(order.estimatedDelivery)}
                     </p>
                   </div>
@@ -129,7 +145,7 @@ export default function OrdersPage() {
                     >
                       {order.status}
                     </span>
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                    <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-slate-800 shadow-sm">
                       {order.paymentMethod}
                     </span>
                     <button
@@ -137,14 +153,14 @@ export default function OrdersPage() {
                       onClick={() =>
                         navigate(`/track-order/${order.id}`, { state: { order } })
                       }
-                      className="rounded-full bg-black px-3 py-1 text-xs font-semibold text-white"
+                      className="rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-white shadow-sm"
                     >
                       Track
                     </button>
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-gray-50 px-3 py-3 mt-4 text-sm text-gray-700">
+                <div className="mt-4 rounded-[1.2rem] bg-white/70 px-3 py-3 text-sm font-semibold text-slate-800 shadow-sm">
                   {order.shippingAddress}
                 </div>
 
@@ -163,13 +179,13 @@ export default function OrdersPage() {
                         )}
 
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                          <h3 className="font-black text-slate-950">{item.title}</h3>
 
-                          <p className="mt-1 text-sm text-gray-500">
+                          <p className="mt-1 text-sm font-semibold text-slate-700">
                             {formatPrice(item.price)} x {item.quantity}
                           </p>
 
-                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                          <p className="mt-1 text-sm font-black text-slate-950">
                             {formatPrice(item.price * item.quantity)}
                           </p>
                         </div>
@@ -178,17 +194,17 @@ export default function OrdersPage() {
                   })}
                 </div>
 
-                <div className="grid gap-3 border-t border-gray-100 pt-4 text-sm sm:grid-cols-2">
-                  <div className="rounded-lg bg-gray-50 px-3 py-3">
-                    <p className="text-gray-500">Total items</p>
-                    <p className="mt-1 text-lg font-bold text-gray-900">
+                <div className="grid gap-3 border-t border-slate-900/10 pt-4 text-sm sm:grid-cols-2">
+                  <div className="rounded-[1.2rem] bg-white/70 px-3 py-3 shadow-sm">
+                    <p className="text-slate-700">Total items</p>
+                    <p className="mt-1 text-lg font-black text-slate-950">
                       {order.totalQuantity}
                     </p>
                   </div>
 
-                  <div className="rounded-lg bg-gray-50 px-3 py-3">
-                    <p className="text-gray-500">Total bill amount</p>
-                    <p className="mt-1 text-lg font-bold text-gray-900">
+                  <div className="rounded-[1.2rem] bg-white/70 px-3 py-3 shadow-sm">
+                    <p className="text-slate-700">Total bill amount</p>
+                    <p className="mt-1 text-lg font-black text-slate-950">
                       {formatPrice(order.totalAmount)}
                     </p>
                   </div>
