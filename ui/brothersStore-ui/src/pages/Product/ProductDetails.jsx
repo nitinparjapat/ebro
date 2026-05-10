@@ -491,7 +491,7 @@ export default function ProductDetails() {
                   aria-hidden="true"
                   className="cod-button__spark cod-button__spark--right"
                 />
-                <span className="cod-button__label">Pay Online &amp; Save Rs. 30 / item</span>
+                <span className="cod-button__label">Buy Now (Prepaid) &amp; Save Rs. 30 / item</span>
               </button>
             </div>
 
