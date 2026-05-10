@@ -120,6 +120,7 @@ export default function AddressForm({
           url.searchParams.set("lon", String(coords.longitude));
           url.searchParams.set("format", "jsonv2");
           url.searchParams.set("addressdetails", "1");
+          url.searchParams.set("zoom", "18");
 
           const response = await fetch(url.toString(), {
             headers: {
@@ -143,10 +144,19 @@ export default function AddressForm({
           const localityLine = [
             address.suburb || address.neighbourhood,
             address.city_district || address.county,
+            address.state_district || address.county,
           ]
             .filter(Boolean)
             .join(", ")
             .trim();
+          const landmark =
+            address.amenity ||
+            address.building ||
+            address.shop ||
+            address.tourism ||
+            address.leisure ||
+            address.office ||
+            "";
           const city =
             address.city ||
             address.town ||
@@ -155,14 +165,17 @@ export default function AddressForm({
             value.city;
           const state = address.state || value.state;
           const pincode = cleanPincode(address.postcode ?? value.pincode ?? "");
+          const country = address.country || "India";
 
           onChange({
             ...value,
-            addressLine1: streetLine || value.addressLine1,
+            addressLine1: streetLine || address.neighbourhood || value.addressLine1,
             addressLine2: localityLine || value.addressLine2,
+            landmark: landmark || value.landmark,
             city: city ?? "",
             state: state ?? "",
             pincode,
+            country,
           });
 
           setGeoLocationState({
