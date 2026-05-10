@@ -15,6 +15,14 @@ namespace BrothersStoreApi.Controllers;
 [Authorize]
 public class OrdersController : ControllerBase
 {
+    private sealed class CartPricingItem
+    {
+        public int ProductId { get; init; }
+        public int Quantity { get; init; }
+        public string ProductName { get; init; } = "";
+        public decimal Price { get; init; }
+    }
+
     private readonly AppDbContext db;
     private readonly IOrderEmailNotificationService orderEmailNotificationService;
 
@@ -82,12 +90,12 @@ public class OrdersController : ControllerBase
             from cartItem in db.CartItems
             join product in db.Products on cartItem.ProductId equals product.Id
             where cartItem.UserId == userId
-            select new
+            select new CartPricingItem
             {
-                cartItem.ProductId,
-                cartItem.Quantity,
+                ProductId = cartItem.ProductId,
+                Quantity = cartItem.Quantity,
                 ProductName = product.Name,
-                product.Price,
+                Price = product.Price,
             }
         ).ToListAsync();
 
@@ -127,9 +135,8 @@ public class OrdersController : ControllerBase
             || paymentMethod.Contains("Razorpay", StringComparison.OrdinalIgnoreCase)
             || paymentMethod.Contains("UPI", StringComparison.OrdinalIgnoreCase);
 
-        var totalQuantity = cartItems.Sum(item => item.Quantity);
         var prepaidDiscountAmount = isPrepaid
-            ? Math.Min(totalQuantity * 30m, subtotalAfterFirstDiscount)
+            ? await ComputePrepaidDiscountAsync(cartItems, subtotalAfterFirstDiscount)
             : 0m;
 
         var finalTotalAmount = Math.Max(0m, subtotalAfterFirstDiscount - prepaidDiscountAmount);
@@ -228,6 +235,45 @@ public class OrdersController : ControllerBase
 
     private bool IsAdmin() =>
         string.Equals(User.FindFirst(ClaimTypes.Role)?.Value, "Admin", StringComparison.OrdinalIgnoreCase);
+
+    private async Task<decimal> ComputePrepaidDiscountAsync(
+        IReadOnlyCollection<CartPricingItem> cartItems,
+        decimal subtotalAfterFirstDiscount
+    )
+    {
+        var rules = await db.PrepaidDiscountRules
+            .AsNoTracking()
+            .Where(rule => rule.IsActive)
+            .ToListAsync();
+
+        // Backwards compatible default: Rs. 30 / item until any rules are configured.
+        if (rules.Count == 0)
+        {
+            var totalQuantity = cartItems.Sum(item => item.Quantity);
+            return Math.Min(totalQuantity * 30m, subtotalAfterFirstDiscount);
+        }
+
+        decimal discount = 0m;
+        foreach (var item in cartItems)
+        {
+            var match = rules
+                .Where(rule =>
+                    rule.ProductId == item.ProductId
+                    && item.Quantity >= rule.MinQuantity
+                    && (!rule.MaxQuantity.HasValue || item.Quantity <= rule.MaxQuantity.Value)
+                )
+                .OrderByDescending(rule => rule.MinQuantity)
+                .ThenBy(rule => rule.MaxQuantity ?? int.MaxValue)
+                .FirstOrDefault();
+
+            if (match != null && match.DiscountPerItem > 0)
+            {
+                discount += match.DiscountPerItem * item.Quantity;
+            }
+        }
+
+        return Math.Min(discount, subtotalAfterFirstDiscount);
+    }
 }
 
 public class CreateOrderRequest

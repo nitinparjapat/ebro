@@ -427,7 +427,7 @@ export default function ProductDetails() {
             </div>
             <div className="flex items-center gap-2">
               <FiTag className="shrink-0 text-slate-500" />
-              <span>Save Rs. 30 off per item on prepaid orders</span>
+              <span>Save on prepaid orders</span>
             </div>
           </div>
 
@@ -491,7 +491,7 @@ export default function ProductDetails() {
                   aria-hidden="true"
                   className="cod-button__spark cod-button__spark--right"
                 />
-                <span className="cod-button__label">Buy Now (Prepaid) &amp; Save Rs. 30 / item</span>
+                <span className="cod-button__label">Buy Now (Prepaid)</span>
               </button>
             </div>
 

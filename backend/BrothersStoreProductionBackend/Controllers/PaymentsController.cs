@@ -17,6 +17,13 @@ namespace BrothersStoreApi.Controllers;
 [Authorize]
 public class PaymentsController : ControllerBase
 {
+    private sealed class CartPricingItem
+    {
+        public int ProductId { get; init; }
+        public int Quantity { get; init; }
+        public decimal Price { get; init; }
+    }
+
     private readonly AppDbContext db;
     private readonly IHttpClientFactory httpClientFactory;
     private readonly RazorpayOptions razorpayOptions;
@@ -86,12 +93,11 @@ public class PaymentsController : ControllerBase
             from cartItem in db.CartItems
             join product in db.Products on cartItem.ProductId equals product.Id
             where cartItem.UserId == userId
-            select new
+            select new CartPricingItem
             {
-                cartItem.ProductId,
-                cartItem.Quantity,
-                ProductName = product.Name,
-                product.Price,
+                ProductId = cartItem.ProductId,
+                Quantity = cartItem.Quantity,
+                Price = product.Price,
             }
         ).ToListAsync();
 
@@ -108,8 +114,7 @@ public class PaymentsController : ControllerBase
         var firstOrderDiscountAmount = !hasPreviousOrders ? Math.Min(50m, originalTotalAmount) : 0m;
         var subtotalAfterFirstDiscount = Math.Max(0m, originalTotalAmount - firstOrderDiscountAmount);
 
-        var totalQuantity = cartItems.Sum(item => item.Quantity);
-        var prepaidDiscountAmount = Math.Min(totalQuantity * 30m, subtotalAfterFirstDiscount);
+        var prepaidDiscountAmount = await ComputePrepaidDiscountAsync(cartItems, subtotalAfterFirstDiscount);
         var finalTotalAmount = Math.Max(0m, subtotalAfterFirstDiscount - prepaidDiscountAmount);
 
         var amountInPaise = (int)Math.Round(finalTotalAmount * 100m, MidpointRounding.AwayFromZero);
@@ -284,6 +289,48 @@ public class PaymentsController : ControllerBase
         var aBytes = Encoding.UTF8.GetBytes(a ?? "");
         var bBytes = Encoding.UTF8.GetBytes(b ?? "");
         return CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
+    }
+
+    private async Task<decimal> ComputePrepaidDiscountAsync(
+        IEnumerable<CartPricingItem> cartItems,
+        decimal subtotalAfterFirstDiscount
+    )
+    {
+        var rules = await db.PrepaidDiscountRules
+            .AsNoTracking()
+            .Where(rule => rule.IsActive)
+            .ToListAsync();
+
+        // Backwards compatible default: Rs. 30 / item until any rules are configured.
+        if (rules.Count == 0)
+        {
+            var totalQuantity = cartItems.Sum(item => item.Quantity);
+            return Math.Min(totalQuantity * 30m, subtotalAfterFirstDiscount);
+        }
+
+        decimal discount = 0m;
+        foreach (var item in cartItems)
+        {
+            var productId = item.ProductId;
+            var quantity = item.Quantity;
+
+            var match = rules
+                .Where(rule =>
+                    rule.ProductId == productId
+                    && quantity >= rule.MinQuantity
+                    && (!rule.MaxQuantity.HasValue || quantity <= rule.MaxQuantity.Value)
+                )
+                .OrderByDescending(rule => rule.MinQuantity)
+                .ThenBy(rule => rule.MaxQuantity ?? int.MaxValue)
+                .FirstOrDefault();
+
+            if (match != null && match.DiscountPerItem > 0)
+            {
+                discount += match.DiscountPerItem * quantity;
+            }
+        }
+
+        return Math.Min(discount, subtotalAfterFirstDiscount);
     }
 }
 

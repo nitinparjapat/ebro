@@ -123,6 +123,15 @@ export default function OwnerDashboard() {
   const [dashboardMessage, setDashboardMessage] = useState("");
   const [dashboardError, setDashboardError] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [prepaidDiscountRules, setPrepaidDiscountRules] = useState([]);
+  const [discountRuleForm, setDiscountRuleForm] = useState({
+    productId: "",
+    minQuantity: "1",
+    maxQuantity: "",
+    discountPerItem: "0",
+  });
+  const [discountRulesLoading, setDiscountRulesLoading] = useState(false);
+  const [discountRulesSaving, setDiscountRulesSaving] = useState(false);
   const [visitorStats, setVisitorStats] = useState({
     uniqueVisitors: 0,
     totalVisitors: 0,
@@ -151,6 +160,109 @@ export default function OwnerDashboard() {
     }).catch(() => {
     });
   }, [isAdmin, isAuthenticated, token]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isAdmin) {
+      return;
+    }
+
+    setDiscountRulesLoading(true);
+    apiClient
+      .get("/admin/prepaid-discounts", {
+        headers: createAuthHeaders(token),
+      })
+      .then(({ data }) => {
+        setPrepaidDiscountRules(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+      })
+      .finally(() => setDiscountRulesLoading(false));
+  }, [isAdmin, isAuthenticated, token]);
+
+  const refreshPrepaidDiscountRules = async () => {
+    const { data } = await apiClient.get("/admin/prepaid-discounts", {
+      headers: createAuthHeaders(token),
+    });
+    setPrepaidDiscountRules(Array.isArray(data) ? data : []);
+  };
+
+  const handleCreateDiscountRule = async (event) => {
+    event.preventDefault();
+
+    setDashboardError("");
+    setDashboardMessage("");
+
+    const productId = Number(discountRuleForm.productId || 0);
+    const minQuantity = Number(discountRuleForm.minQuantity || 0);
+    const maxQuantityRaw = String(discountRuleForm.maxQuantity ?? "").trim();
+    const maxQuantity = maxQuantityRaw ? Number(maxQuantityRaw) : null;
+    const discountPerItem = Number(discountRuleForm.discountPerItem || 0);
+
+    if (!productId) {
+      setDashboardError("Select a product for the prepaid discount rule.");
+      return;
+    }
+
+    if (!Number.isFinite(minQuantity) || minQuantity < 1) {
+      setDashboardError("Min quantity must be at least 1.");
+      return;
+    }
+
+    if (maxQuantity !== null && (!Number.isFinite(maxQuantity) || maxQuantity < minQuantity)) {
+      setDashboardError("Max quantity must be empty or greater than min quantity.");
+      return;
+    }
+
+    if (!Number.isFinite(discountPerItem) || discountPerItem < 0) {
+      setDashboardError("Discount per item must be 0 or more.");
+      return;
+    }
+
+    setDiscountRulesSaving(true);
+    try {
+      await apiClient.post(
+        "/admin/prepaid-discounts",
+        {
+          productId,
+          minQuantity,
+          maxQuantity,
+          discountPerItem,
+          isActive: true,
+        },
+        {
+          headers: createAuthHeaders(token),
+        }
+      );
+
+      await refreshPrepaidDiscountRules();
+      setDiscountRuleForm((current) => ({
+        ...current,
+        minQuantity: "1",
+        maxQuantity: "",
+        discountPerItem: "0",
+      }));
+      setDashboardMessage("Prepaid discount rule saved.");
+    } catch (error) {
+      setDashboardError(error?.response?.data?.message || error?.message || "Unable to save prepaid discount rule.");
+    } finally {
+      setDiscountRulesSaving(false);
+    }
+  };
+
+  const handleDeleteDiscountRule = async (ruleId) => {
+    setDashboardError("");
+    setDashboardMessage("");
+
+    try {
+      await apiClient.delete(`/admin/prepaid-discounts/${ruleId}`, {
+        headers: createAuthHeaders(token),
+      });
+      await refreshPrepaidDiscountRules();
+      setDashboardMessage("Prepaid discount rule deleted.");
+    } catch (error) {
+      setDashboardError(error?.response?.data?.message || error?.message || "Unable to delete prepaid discount rule.");
+    }
+  };
 
   const stats = useMemo(() => {
     const activeProducts = products.filter((product) => product.isActive);
@@ -849,6 +961,152 @@ export default function OwnerDashboard() {
               {saving ? "Saving..." : productForm.id ? "Update Product" : "Post Product"}
             </button>
           </form>
+
+          <section className="rounded-lg bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-bold text-gray-900">Prepaid discounts</h2>
+              <button
+                type="button"
+                onClick={() => refreshPrepaidDiscountRules().catch(() => {})}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:border-gray-300"
+                disabled={discountRulesLoading}
+              >
+                <FiRefreshCw className={discountRulesLoading ? "animate-spin" : ""} />
+                Refresh
+              </button>
+            </div>
+
+            <p className="mt-2 text-sm text-gray-600">
+              Configure how much to discount on prepaid orders per product and quantity range. Discounts apply per item.
+            </p>
+
+            <form onSubmit={handleCreateDiscountRule} className="mt-4 grid gap-3 md:grid-cols-5">
+              <label className="block md:col-span-2">
+                <span className="text-sm font-semibold text-gray-700">Product</span>
+                <select
+                  value={discountRuleForm.productId}
+                  onChange={(event) =>
+                    setDiscountRuleForm((current) => ({ ...current, productId: event.target.value }))
+                  }
+                  className={inputClass}
+                >
+                  <option value="">Select product</option>
+                  {products.map((product) => (
+                    <option key={`discount-product-${product.id}`} value={product.id}>
+                      {product.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Min qty</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={discountRuleForm.minQuantity}
+                  onChange={(event) =>
+                    setDiscountRuleForm((current) => ({ ...current, minQuantity: event.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Max qty</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={discountRuleForm.maxQuantity}
+                  onChange={(event) =>
+                    setDiscountRuleForm((current) => ({ ...current, maxQuantity: event.target.value }))
+                  }
+                  placeholder="Optional"
+                  className={inputClass}
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700">Off / item</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={discountRuleForm.discountPerItem}
+                  onChange={(event) =>
+                    setDiscountRuleForm((current) => ({ ...current, discountPerItem: event.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+
+              <div className="md:col-span-5">
+                <button
+                  type="submit"
+                  disabled={discountRulesSaving}
+                  className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  <FiPlus />
+                  {discountRulesSaving ? "Saving..." : "Add rule"}
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-5">
+              {discountRulesLoading ? (
+                <p className="text-sm text-gray-500">Loading prepaid discount rules...</p>
+              ) : prepaidDiscountRules.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No rules yet. Until you add rules, the store uses the default prepaid discount logic.
+                </p>
+              ) : (
+                <div className="overflow-auto rounded-lg border border-gray-200">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-600">
+                      <tr>
+                        <th className="px-3 py-2">Product</th>
+                        <th className="px-3 py-2">Min</th>
+                        <th className="px-3 py-2">Max</th>
+                        <th className="px-3 py-2">Off / item</th>
+                        <th className="px-3 py-2">Status</th>
+                        <th className="px-3 py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {prepaidDiscountRules.map((rule) => (
+                        <tr key={`prepaid-rule-${rule.id}`} className="bg-white">
+                          <td className="px-3 py-2 font-semibold text-gray-900">
+                            {rule.productName || products.find((p) => p.id === rule.productId)?.title || `#${rule.productId}`}
+                          </td>
+                          <td className="px-3 py-2 text-gray-700">{rule.minQuantity}</td>
+                          <td className="px-3 py-2 text-gray-700">{rule.maxQuantity ?? "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{formatPrice(Number(rule.discountPerItem || 0))}</td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                                rule.isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {rule.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDiscountRule(rule.id)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:border-gray-300"
+                            >
+                              <FiTrash2 />
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
 
           <section className="rounded-lg bg-white p-4 shadow-sm">
             <h2 className="text-lg font-bold text-gray-900">Products</h2>

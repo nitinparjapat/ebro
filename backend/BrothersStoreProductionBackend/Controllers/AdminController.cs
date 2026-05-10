@@ -226,9 +226,108 @@ public class AdminController : ControllerBase
 
         return Ok(admin);
     }
+
+    [HttpGet("prepaid-discounts")]
+    public async Task<IActionResult> GetPrepaidDiscountRules()
+    {
+        var rules = await db.PrepaidDiscountRules
+            .AsNoTracking()
+            .OrderByDescending(rule => rule.IsActive)
+            .ThenBy(rule => rule.ProductId)
+            .ThenBy(rule => rule.MinQuantity)
+            .ToListAsync();
+
+        var productIds = rules.Select(rule => rule.ProductId).Distinct().ToList();
+        var products = await db.Products
+            .AsNoTracking()
+            .Where(product => productIds.Contains(product.Id))
+            .Select(product => new { product.Id, product.Name })
+            .ToListAsync();
+
+        var productLookup = products.ToDictionary(product => product.Id, product => product.Name);
+
+        return Ok(rules.Select(rule => new
+        {
+            rule.Id,
+            rule.ProductId,
+            productName = productLookup.TryGetValue(rule.ProductId, out var name) ? name : "",
+            rule.MinQuantity,
+            rule.MaxQuantity,
+            rule.DiscountPerItem,
+            rule.IsActive,
+        }));
+    }
+
+    [HttpPost("prepaid-discounts")]
+    public async Task<IActionResult> CreatePrepaidDiscountRule([FromBody] PrepaidDiscountRuleUpsertRequest request)
+    {
+        if (request.ProductId <= 0)
+        {
+            return BadRequest(new { message = "Product is required." });
+        }
+
+        if (request.MinQuantity < 1)
+        {
+            return BadRequest(new { message = "Min quantity must be at least 1." });
+        }
+
+        if (request.MaxQuantity.HasValue && request.MaxQuantity.Value < request.MinQuantity)
+        {
+            return BadRequest(new { message = "Max quantity must be greater than or equal to min quantity." });
+        }
+
+        if (request.DiscountPerItem < 0)
+        {
+            return BadRequest(new { message = "Discount per item cannot be negative." });
+        }
+
+        var productExists = await db.Products.AsNoTracking().AnyAsync(product => product.Id == request.ProductId);
+        if (!productExists)
+        {
+            return BadRequest(new { message = "Invalid product." });
+        }
+
+        var rule = new PrepaidDiscountRule
+        {
+            ProductId = request.ProductId,
+            MinQuantity = request.MinQuantity,
+            MaxQuantity = request.MaxQuantity,
+            DiscountPerItem = request.DiscountPerItem,
+            IsActive = request.IsActive ?? true,
+        };
+
+        db.PrepaidDiscountRules.Add(rule);
+        await db.SaveChangesAsync();
+
+        return Ok(rule);
+    }
+
+    [HttpDelete("prepaid-discounts/{id:int}")]
+    public async Task<IActionResult> DeletePrepaidDiscountRule(int id)
+    {
+        var rule = await db.PrepaidDiscountRules.FindAsync(id);
+        if (rule == null)
+        {
+            return NotFound(new { message = "Rule not found." });
+        }
+
+        db.PrepaidDiscountRules.Remove(rule);
+        await db.SaveChangesAsync();
+
+        return Ok(new { deleted = true });
+    }
 }
 
 public class UpdateOrderStatusRequest
 {
     public string Status { get; set; } = "";
+}
+
+public class PrepaidDiscountRuleUpsertRequest
+{
+    public int ProductId { get; set; }
+    public int MinQuantity { get; set; } = 1;
+    public int? MaxQuantity { get; set; }
+    public decimal DiscountPerItem { get; set; }
+    public bool? IsActive { get; set; }
 }

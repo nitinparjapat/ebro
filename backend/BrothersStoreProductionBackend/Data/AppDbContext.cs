@@ -17,6 +17,7 @@ public DbSet<Review> Reviews=>Set<Review>();
 public DbSet<Address> Addresses=>Set<Address>();
 public DbSet<User> Users=>Set<User>();
 public DbSet<WebsiteVisit> WebsiteVisits=>Set<WebsiteVisit>();
+public DbSet<PrepaidDiscountRule> PrepaidDiscountRules=>Set<PrepaidDiscountRule>();
 
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
@@ -27,6 +28,7 @@ modelBuilder.Entity<Product>().Property(p=>p.Price).HasPrecision(18,2);
 modelBuilder.Entity<Order>().Property(o=>o.TotalAmount).HasPrecision(18,2);
 modelBuilder.Entity<OrderItem>().Property(o=>o.Price).HasPrecision(18,2);
 modelBuilder.Entity<WebsiteVisit>().HasIndex(visit=>new { visit.ClientKey, visit.VisitDateUtc });
+modelBuilder.Entity<PrepaidDiscountRule>().Property(rule=>rule.DiscountPerItem).HasPrecision(18,2);
 }
 
 }

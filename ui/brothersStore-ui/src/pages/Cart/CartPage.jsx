@@ -91,8 +91,10 @@ export default function CartPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const prepaidDiscountAmount = paymentMode === "prepaid" ? cartQuantity * 30 : 0;
-  const payableAmount = Math.max(0, cartTotal - prepaidDiscountAmount);
+  // Prepaid discounts are calculated on the backend (per-product rules) when creating the Razorpay order.
+  // Keep the cart summary simple so it stays correct even when discount rules change.
+  const prepaidDiscountAmount = 0;
+  const payableAmount = cartTotal;
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -571,6 +573,12 @@ export default function CartPage() {
                   <span>{formatPrice(cartTotal)}</span>
                 </div>
 
+                {paymentMode === "prepaid" && (
+                  <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+                    Prepaid discount is applied at checkout.
+                  </div>
+                )}
+
                 {paymentMode === "prepaid" && prepaidDiscountAmount > 0 && (
                   <div className="flex justify-between text-sm font-semibold text-emerald-700">
                     <span>Prepaid discount (Rs. 30 × {cartQuantity})</span>
@@ -626,7 +634,7 @@ export default function CartPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-slate-900">Prepaid (Buy Now)</p>
                       <p className="mt-0.5 text-xs font-medium text-emerald-700">
-                        Save Rs. 30 off per item
+                        Save on prepaid orders
                       </p>
                       <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-600">
                         <FiShield className="shrink-0" />
@@ -772,7 +780,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <FiTag className="shrink-0 text-slate-500" />
-                    <span>Save Rs. 30 off per item on prepaid orders</span>
+                    <span>Save on prepaid orders</span>
                   </div>
                 </div>
               )}
@@ -799,7 +807,7 @@ export default function CartPage() {
                   {placingOrder
                     ? "Placing order..."
                     : paymentMode === "prepaid"
-                      ? "Buy Now (Prepaid) & Save Rs. 30 / item"
+                      ? "Buy Now (Prepaid)"
                       : "Proceed with Cash on Delivery"}
                 </span>
               </button>
