@@ -853,7 +853,9 @@ export default function CartPage() {
 
               <button
                 type="button"
-                onClick={paymentMode === "cod" ? handlePlaceCodOrder : handlePayOnline}
+                onClick={
+                  paymentMode === "cod" ? handlePlaceCodOrder : () => handlePayOnline()
+                }
                 disabled={placingOrder}
                 className="cod-button mt-5 w-full rounded-lg bg-green-600 py-3 font-semibold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
               >
