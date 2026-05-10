@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaHeart } from "react-icons/fa";
 import { FiMinus, FiPlus } from "react-icons/fi";
@@ -9,24 +9,83 @@ import { getDiscountPercent } from "../../lib/storeApi";
 import Rating from "../common/Rating";
 
 function ProductCard({ product }) {
-  if (!product) {
-    return null;
-  }
-
   const navigate = useNavigate();
   const { cart, addToCart, decreaseQuantity } = useCart();
   const { wishlist, toggleWishlist } = useWishlist();
 
+  const productId = product?.id;
+  const productImages = product?.images;
+
+  const images = useMemo(
+    () => (Array.isArray(productImages) ? productImages.filter(Boolean) : []).slice(0, 6),
+    [productImages]
+  );
+  const image = images[0];
+  const goToDetails = () => {
+    if (!productId) {
+      return;
+    }
+    navigate(`/product/${productId}`);
+  };
+  const stopPropagation = (event) => event.stopPropagation();
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [productId]);
+
+  useEffect(() => {
+    const element = cardRef.current;
+    if (!element) {
+      return undefined;
+    }
+
+    if (typeof window === "undefined" || typeof window.IntersectionObserver === "undefined") {
+      setIsInView(true);
+      return undefined;
+    }
+
+    const observer = new window.IntersectionObserver(
+      ([entry]) => setIsInView(Boolean(entry?.isIntersecting)),
+      { rootMargin: "120px 0px", threshold: 0.2 }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (images.length <= 1 || !isInView || isHovered) {
+      return undefined;
+    }
+
+    if (typeof window !== "undefined") {
+      const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      if (prefersReducedMotion) {
+        return undefined;
+      }
+    }
+
+    const intervalId = globalThis.setInterval(() => {
+      setActiveImageIndex((current) => (current + 1) % images.length);
+    }, 2600);
+
+    return () => globalThis.clearInterval(intervalId);
+  }, [images.length, isHovered, isInView]);
+
+  if (!product) {
+    return null;
+  }
+
   const isWishlisted = wishlist.find((item) => item.id === product.id);
-  const image = product.images?.[0];
   const isOutOfStock = (product.stock ?? 0) <= 0;
   const cartItem = cart.find((item) => item.id === product.id);
   const cartQuantity = cartItem?.quantity ?? 0;
   const discountPercent =
     product.discountPercent ?? getDiscountPercent(product.oldPrice, product.price);
-
-  const goToDetails = () => navigate(`/product/${product.id}`);
-  const stopPropagation = (event) => event.stopPropagation();
 
   const handleAddToCart = async () => {
     try {
@@ -52,7 +111,12 @@ function ProductCard({ product }) {
   };
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.07)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_20px_42px_rgba(15,23,42,0.12)]">
+    <div
+      ref={cardRef}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.07)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_20px_42px_rgba(15,23,42,0.12)]"
+    >
       <button
         type="button"
         onClick={(event) => {
@@ -69,7 +133,7 @@ function ProductCard({ product }) {
 
       <div className="relative overflow-hidden">
         <img
-          src={image}
+          src={images[activeImageIndex] || image}
           alt={product.title}
           onClick={goToDetails}
           loading="lazy"
@@ -77,6 +141,18 @@ function ProductCard({ product }) {
           className="h-44 w-full cursor-pointer object-cover transition duration-500 group-hover:scale-[1.035] sm:h-48"
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/35 to-transparent" />
+        {images.length > 1 && (
+          <div className="pointer-events-none absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+            {images.map((_, index) => (
+              <span
+                key={`dot-${product.id}-${index}`}
+                className={`h-1.5 w-1.5 rounded-full transition ${
+                  index === activeImageIndex ? "bg-white" : "bg-white/45"
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div
