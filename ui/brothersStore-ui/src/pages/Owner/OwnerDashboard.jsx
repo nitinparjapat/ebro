@@ -78,6 +78,17 @@ const productToForm = (product) => ({
   isActive: product.isActive,
 });
 
+const getDiscountPercent = (originalPrice, finalPrice) => {
+  const original = Number(originalPrice ?? 0);
+  const finalAmount = Number(finalPrice ?? 0);
+
+  if (!Number.isFinite(original) || !Number.isFinite(finalAmount) || original <= 0 || original <= finalAmount) {
+    return 0;
+  }
+
+  return Math.round(((original - finalAmount) / original) * 100);
+};
+
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1120,6 +1131,8 @@ export default function OwnerDashboard() {
               <div className="mt-4 space-y-3 md:hidden">
                 {productOrderStats.map((productStat) => {
                   const product = productStat.product;
+                  const discountPercent = getDiscountPercent(product.oldPrice, product.price);
+                  const hasDiscount = product.oldPrice > product.price && discountPercent > 0;
 
                   return (
                     <article key={`mobile-${product.id}`} className="rounded-lg border border-gray-200 p-3">
@@ -1150,6 +1163,16 @@ export default function OwnerDashboard() {
                         <div className="rounded-md bg-gray-50 px-2 py-1.5">
                           <p className="text-gray-500">Price</p>
                           <p className="font-semibold text-gray-900">{formatPrice(product.price)}</p>
+                          {hasDiscount && (
+                            <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                              <span className="text-[11px] text-gray-400 line-through">
+                                {formatPrice(product.oldPrice)}
+                              </span>
+                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                {discountPercent}% OFF
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div className="rounded-md bg-gray-50 px-2 py-1.5">
                           <p className="text-gray-500">Stock</p>
@@ -1208,6 +1231,8 @@ export default function OwnerDashboard() {
                   <tbody>
                     {productOrderStats.map((productStat) => {
                       const product = productStat.product;
+                      const discountPercent = getDiscountPercent(product.oldPrice, product.price);
+                      const hasDiscount = product.oldPrice > product.price && discountPercent > 0;
 
                       return (
                       <tr key={product.id} className="border-b border-gray-100">
@@ -1234,7 +1259,19 @@ export default function OwnerDashboard() {
                           {product.category}
                         </td>
                         <td className="py-3 pr-3 font-semibold text-gray-900">
-                          {formatPrice(product.price)}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span>{formatPrice(product.price)}</span>
+                            {hasDiscount && (
+                              <>
+                                <span className="text-xs font-medium text-gray-400 line-through">
+                                  {formatPrice(product.oldPrice)}
+                                </span>
+                                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+                                  {discountPercent}% OFF
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 pr-3 text-gray-600">
                           {product.stock}
