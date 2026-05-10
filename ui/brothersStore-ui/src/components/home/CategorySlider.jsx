@@ -4,18 +4,18 @@ export default function CategorySlider({
   onSelectCategory,
 }) {
   return (
-    <section className="paper-bg border-y border-slate-300/50 px-4 py-3 md:px-6">
-      <div className="mx-auto flex max-w-7xl items-center gap-3">
-        <div className="hidden shrink-0 sm:block">
-          <p className="newspaper-kicker">
-            Home Desk
-          </p>
-          <h2 className="font-masthead text-lg font-bold text-slate-950">
-            Browse by story
-          </h2>
+    <section className="px-4 py-3 md:px-6 md:py-5">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-2 flex items-end justify-between gap-3 md:mb-3">
+          <div>
+            <p className="genz-kicker">Browse The Vibe</p>
+            <h2 className="mt-1 text-xl font-black tracking-[-0.03em] text-slate-950 md:text-2xl">
+              Pick a corner of home life
+            </h2>
+          </div>
         </div>
 
-        <div className="flex flex-1 snap-x gap-2 overflow-x-auto py-1 scrollbar-hide">
+        <div className="flex snap-x gap-2.5 overflow-x-auto pb-2 scrollbar-hide md:gap-3">
           {categories.map((category) => {
             const isSelected = selectedCategory === category.name;
 
@@ -24,33 +24,31 @@ export default function CategorySlider({
                 key={category.id}
                 type="button"
                 onClick={() => onSelectCategory(category.name)}
-                className={`group flex min-w-[148px] snap-start items-center gap-3 rounded-2xl border p-2 pr-3 text-left transition md:min-w-[176px] ${
+                className={`group genz-paper min-w-[146px] snap-start rounded-[1.35rem] border p-2.5 text-left transition md:min-w-[198px] md:rounded-[1.6rem] md:p-3 ${
                   isSelected
-                    ? "border-slate-900 bg-slate-900 text-white shadow-[0_12px_24px_rgba(15,23,42,0.14)]"
-                    : "paper-panel text-slate-800 hover:-translate-y-0.5 hover:border-slate-400"
+                    ? "rotate-[-1deg] border-slate-900 bg-slate-900 text-white shadow-[0_14px_26px_rgba(15,23,42,0.16)]"
+                    : "paper-panel rotate-[0.4deg] text-slate-900 hover:-translate-y-1 hover:rotate-[-0.4deg]"
                 }`}
               >
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  loading="lazy"
-                  decoding="async"
-                  className={`h-12 w-12 rounded-xl object-cover ${
-                    isSelected ? "opacity-90 ring-1 ring-white/30" : "shadow-sm"
-                  }`}
-                />
-                <span className="min-w-0">
-                  <span className={`block truncate text-sm font-black leading-tight ${isSelected ? "" : "font-masthead text-[1rem]"}`}>
-                    {category.name}
-                  </span>
-                  <span
-                    className={`block text-[11px] font-semibold uppercase tracking-[0.12em] ${
-                      isSelected ? "text-white/70" : "text-slate-500"
+                <div className="flex items-center gap-3">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    loading="lazy"
+                    decoding="async"
+                    className={`h-11 w-11 rounded-[0.9rem] object-cover md:h-14 md:w-14 md:rounded-[1rem] ${
+                      isSelected ? "ring-1 ring-white/30" : "shadow-sm"
                     }`}
-                  >
-                    Browse collection
-                  </span>
-                </span>
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black tracking-[-0.02em] md:text-base">
+                      {category.name}
+                    </p>
+                    <p className={`mt-1 text-[11px] font-bold uppercase tracking-[0.14em] ${isSelected ? "text-white/70" : "text-slate-500"}`}>
+                      Curated picks
+                    </p>
+                  </div>
+                </div>
               </button>
             );
           })}

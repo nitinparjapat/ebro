@@ -56,31 +56,28 @@ export default function Home() {
         />
       )}
 
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
-        <div className="paper-panel mb-5 rounded-[2rem] px-5 py-5 md:px-7">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="newspaper-kicker">
-                House Notes
-              </p>
-              <h2 className="font-masthead mt-2 text-3xl font-black leading-tight text-slate-950">
-                {selectedCategory === "All"
-                  ? "Trending Home Finds"
-                  : `${selectedCategory} Selections`}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Decor details, useful home touches, and everyday essentials chosen for modern homes instead of furniture-heavy browsing.
-              </p>
-            </div>
-            <div className="md:text-right">
-              <p className="newspaper-caption">Current Shelf</p>
-              <p className="mt-2 text-sm font-semibold text-slate-600">
-                {filteredProducts.length} item{filteredProducts.length === 1 ? "" : "s"} available
-              </p>
-            </div>
+      <div className="mx-auto max-w-7xl px-4 pb-8 pt-1 md:px-6 md:pb-10 md:pt-2">
+        <div className="mb-4 flex flex-col gap-3 md:mb-5 md:flex-row md:items-end md:justify-between md:gap-4">
+          <div className="genz-tape genz-paper paper-panel rounded-[1.5rem] px-4 py-4 md:min-w-[420px] md:rounded-[1.8rem] md:px-5 md:py-5">
+            <p className="genz-kicker">Latest Shelf Edit</p>
+            <h2 className="mt-1.5 text-2xl font-black tracking-[-0.04em] text-slate-950 md:mt-2 md:text-3xl">
+              {selectedCategory === "All"
+                ? "Trending Home Finds"
+                : `${selectedCategory} Finds`}
+            </h2>
+            <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-700 md:mt-2 md:leading-6">
+              Decor touches and useful home pieces that make everyday spaces feel more styled, more lived in, and less plain.
+            </p>
           </div>
 
-          <div className="newspaper-rule mt-5" />
+          <div className="self-start rounded-[1.1rem] bg-slate-950 px-3.5 py-2.5 text-white shadow-[0_12px_22px_rgba(15,23,42,0.14)] md:self-auto md:rounded-[1.4rem] md:px-4 md:py-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/65">
+              Now Showing
+            </p>
+            <p className="mt-1 text-sm font-bold">
+              {filteredProducts.length} item{filteredProducts.length === 1 ? "" : "s"}
+            </p>
+          </div>
         </div>
 
         {error && products.length > 0 && (
@@ -96,8 +93,10 @@ export default function Home() {
             {error}
           </p>
         ) : (
-          <div className="paper-panel rounded-[2rem] p-4 md:p-6">
-            <ProductGrid products={filteredProducts} />
+          <div className="paper-stack">
+            <div className="genz-paper paper-panel rounded-[2rem] p-4 md:p-6">
+              <ProductGrid products={filteredProducts} />
+            </div>
           </div>
         )}
       </div>

@@ -84,8 +84,11 @@ function ProductCard({ product }) {
   const isOutOfStock = (product.stock ?? 0) <= 0;
   const cartItem = cart.find((item) => item.id === product.id);
   const cartQuantity = cartItem?.quantity ?? 0;
+  const originalPrice = Number(product.originalPrice ?? product.oldPrice ?? product.price ?? 0);
+  const discountedPrice = Number(product.price ?? 0);
   const discountPercent =
-    product.discountPercent ?? getDiscountPercent(product.oldPrice, product.price);
+    product.discountPercent ?? getDiscountPercent(originalPrice, discountedPrice);
+  const hasDiscount = originalPrice > discountedPrice && discountPercent > 0;
 
   const handleAddToCart = async () => {
     try {
@@ -178,18 +181,29 @@ function ProductCard({ product }) {
 
         <Rating rating={product.rating} />
 
-        <div className="mt-1 flex items-center gap-2">
-          <span className="text-xl font-black leading-none text-slate-900 sm:text-lg">Rs. {product.price.toLocaleString("en-IN")}</span>
+        <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/80 p-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Discounted price
+            </span>
+            <span className="text-lg font-black leading-none text-slate-900">
+              Rs. {discountedPrice.toLocaleString("en-IN")}
+            </span>
+          </div>
 
-          {product.oldPrice > product.price && (
-            <>
-              <span className="text-xs text-gray-400 line-through">
-                Rs. {product.oldPrice.toLocaleString("en-IN")}
+          {hasDiscount && (
+            <div className="mt-2 flex items-center justify-between gap-3 text-xs">
+              <span className="text-slate-500">
+                Main price:
+                {" "}
+                <span className="font-semibold line-through">
+                  Rs. {originalPrice.toLocaleString("en-IN")}
+                </span>
               </span>
-              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+              <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-bold text-emerald-700">
                 {discountPercent}% OFF
               </span>
-            </>
+            </div>
           )}
         </div>
 
