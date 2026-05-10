@@ -93,6 +93,11 @@ export const openRazorpayCheckout = ({
     name: merchantName,
     description,
     order_id: orderId,
+    // Ask checkout to show UPI collect flow (VPA input) where supported by the account/platform.
+    // If Razorpay has collect disabled for the merchant, it will still fall back to QR/Intent.
+    upi: {
+      flow: "collect",
+    },
     prefill: {
       name: customer?.name ?? "",
       email: customer?.email ?? "",
