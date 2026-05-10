@@ -44,7 +44,7 @@ export default function Home() {
   }, [deferredSearchTerm, products, selectedCategory]);
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_42%,#f8fafc_100%)]">
+    <div className="paper-bg min-h-screen">
       <Navbar />
       <HeroBanner />
 
@@ -56,21 +56,31 @@ export default function Home() {
         />
       )}
 
-      <div className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-7">
-        <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Store picks
-            </p>
-            <h2 className="mt-2 text-2xl font-black text-slate-900">
-              {selectedCategory === "All"
-                ? "Trending Products"
-                : `${selectedCategory} Products`}
-            </h2>
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
+        <div className="paper-panel mb-5 rounded-[2rem] px-5 py-5 md:px-7">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="newspaper-kicker">
+                House Notes
+              </p>
+              <h2 className="font-masthead mt-2 text-3xl font-black leading-tight text-slate-950">
+                {selectedCategory === "All"
+                  ? "Trending Home Finds"
+                  : `${selectedCategory} Selections`}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Decor details, useful home touches, and everyday essentials chosen for modern homes instead of furniture-heavy browsing.
+              </p>
+            </div>
+            <div className="md:text-right">
+              <p className="newspaper-caption">Current Shelf</p>
+              <p className="mt-2 text-sm font-semibold text-slate-600">
+                {filteredProducts.length} item{filteredProducts.length === 1 ? "" : "s"} available
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-slate-500">
-            {filteredProducts.length} item{filteredProducts.length === 1 ? "" : "s"} available
-          </p>
+
+          <div className="newspaper-rule mt-5" />
         </div>
 
         {error && products.length > 0 && (
@@ -86,7 +96,7 @@ export default function Home() {
             {error}
           </p>
         ) : (
-          <div className="rounded-2xl border border-slate-200/70 bg-white/82 p-4 shadow-[0_18px_42px_rgba(15,23,42,0.05)] backdrop-blur md:p-6">
+          <div className="paper-panel rounded-[2rem] p-4 md:p-6">
             <ProductGrid products={filteredProducts} />
           </div>
         )}

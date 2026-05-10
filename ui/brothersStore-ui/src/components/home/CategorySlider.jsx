@@ -4,14 +4,14 @@ export default function CategorySlider({
   onSelectCategory,
 }) {
   return (
-    <section className="border-y border-slate-200/70 bg-white/82 px-4 py-2.5 backdrop-blur md:px-6">
+    <section className="paper-bg border-y border-slate-300/50 px-4 py-3 md:px-6">
       <div className="mx-auto flex max-w-7xl items-center gap-3">
         <div className="hidden shrink-0 sm:block">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Categories
+          <p className="newspaper-kicker">
+            Home Desk
           </p>
-          <h2 className="text-sm font-black text-slate-950">
-            Quick browse
+          <h2 className="font-masthead text-lg font-bold text-slate-950">
+            Browse by story
           </h2>
         </div>
 
@@ -24,10 +24,10 @@ export default function CategorySlider({
                 key={category.id}
                 type="button"
                 onClick={() => onSelectCategory(category.name)}
-                className={`group flex min-w-[132px] snap-start items-center gap-2 rounded-xl border p-1.5 pr-3 text-left transition md:min-w-[150px] ${
+                className={`group flex min-w-[148px] snap-start items-center gap-3 rounded-2xl border p-2 pr-3 text-left transition md:min-w-[176px] ${
                   isSelected
-                    ? "border-slate-950 bg-slate-950 text-white shadow-[0_10px_22px_rgba(15,23,42,0.16)]"
-                    : "border-slate-200 bg-slate-50/90 text-slate-800 hover:border-slate-300 hover:bg-white hover:shadow-[0_8px_18px_rgba(15,23,42,0.07)]"
+                    ? "border-slate-900 bg-slate-900 text-white shadow-[0_12px_24px_rgba(15,23,42,0.14)]"
+                    : "paper-panel text-slate-800 hover:-translate-y-0.5 hover:border-slate-400"
                 }`}
               >
                 <img
@@ -35,20 +35,20 @@ export default function CategorySlider({
                   alt={category.name}
                   loading="lazy"
                   decoding="async"
-                  className={`h-10 w-10 rounded-lg object-cover ${
-                    isSelected ? "opacity-90 ring-1 ring-white/30" : ""
+                  className={`h-12 w-12 rounded-xl object-cover ${
+                    isSelected ? "opacity-90 ring-1 ring-white/30" : "shadow-sm"
                   }`}
                 />
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-black leading-tight">
+                  <span className={`block truncate text-sm font-black leading-tight ${isSelected ? "" : "font-masthead text-[1rem]"}`}>
                     {category.name}
                   </span>
                   <span
-                    className={`block text-[11px] font-semibold ${
+                    className={`block text-[11px] font-semibold uppercase tracking-[0.12em] ${
                       isSelected ? "text-white/70" : "text-slate-500"
                     }`}
                   >
-                    Browse picks
+                    Browse collection
                   </span>
                 </span>
               </button>

@@ -30,6 +30,42 @@
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
+.paper-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(250, 246, 238, 0.93)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(15, 23, 42, 0.03) 0px,
+      rgba(15, 23, 42, 0.03) 1px,
+      transparent 1px,
+      transparent 10px
+    );
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  box-shadow: 0 20px 46px rgba(15, 23, 42, 0.08);
+}
+
+.newspaper-kicker {
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: rgba(71, 85, 105, 0.92);
+}
+
+.newspaper-chip {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+.newspaper-caption {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(100, 116, 139, 0.95);
+}
+
 .newspaper-rule {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.34), transparent);
