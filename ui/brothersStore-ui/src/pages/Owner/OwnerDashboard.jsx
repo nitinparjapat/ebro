@@ -1223,7 +1223,7 @@ export default function OwnerDashboard() {
                       <th className="py-3 pr-3 font-semibold">Orders</th>
                       <th className="py-3 pr-3 font-semibold">Status</th>
                       <th className="py-3 pr-3 font-semibold">Media</th>
-                      <th className="sticky right-0 bg-white py-3 pl-3 text-right font-semibold shadow-[-10px_0_14px_-14px_rgba(0,0,0,0.35)]">
+                      <th className="py-3 pl-3 text-right font-semibold">
                         Actions
                       </th>
                     </tr>
@@ -1308,7 +1308,7 @@ export default function OwnerDashboard() {
                             )}
                           </span>
                         </td>
-                        <td className="sticky right-0 bg-white py-3 pl-3 text-right shadow-[-10px_0_14px_-14px_rgba(0,0,0,0.35)]">
+                        <td className="py-3 pl-3 text-right">
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
