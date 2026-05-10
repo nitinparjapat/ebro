@@ -81,6 +81,11 @@ export const openRazorpayCheckout = ({
     throw new Error("Payment SDK is not available.");
   }
 
+  const rawContact = customer?.contact ?? customer?.mobile ?? "";
+  const contactDigits = String(rawContact).replace(/\D/g, "");
+  const sanitizedContact =
+    contactDigits.length > 10 ? contactDigits.slice(-10) : contactDigits;
+
   const options = {
     key,
     amount,
@@ -91,7 +96,7 @@ export const openRazorpayCheckout = ({
     prefill: {
       name: customer?.name ?? "",
       email: customer?.email ?? "",
-      contact: customer?.contact ?? customer?.mobile ?? "",
+      contact: sanitizedContact,
     },
     method: {
       upi: true,
