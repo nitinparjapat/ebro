@@ -45,6 +45,17 @@ export const createRazorpayOrder = async ({ token, customer }) => {
   return data;
 };
 
+export const getCartPricingPreview = async ({ token, paymentMethod }) => {
+  const { data } = await apiClient.get("/payments/pricing-preview", {
+    headers: createAuthHeaders(token),
+    params: {
+      paymentMethod,
+    },
+  });
+
+  return data;
+};
+
 export const verifyRazorpayPayment = async ({
   token,
   razorpayOrderId,

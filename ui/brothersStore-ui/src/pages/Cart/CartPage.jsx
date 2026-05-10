@@ -23,6 +23,7 @@ import { useOrders } from "../../context/OrdersContext";
 import { useProducts } from "../../context/ProductsContext";
 import {
   createRazorpayOrder,
+  getCartPricingPreview,
   loadRazorpayCheckout,
   openRazorpayCheckout,
   verifyRazorpayPayment,
@@ -80,8 +81,13 @@ export default function CartPage() {
   const [successOrder, setSuccessOrder] = useState(null);
   const [addressFormDirty, setAddressFormDirty] = useState(false);
   const [paymentMode, setPaymentMode] = useState("cod");
+  const [pricingPreview, setPricingPreview] = useState(null);
   const autoSaveTimeoutRef = useRef(null);
   const keepAddressFormOpenRef = useRef(savedAddresses.length === 0);
+  const cartPricingKey = cart
+    .map((item) => `${item.id}:${item.quantity}:${item.price}`)
+    .sort()
+    .join("|");
 
   useEffect(() => {
     const payMode = searchParams.get("pay");
@@ -91,10 +97,41 @@ export default function CartPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Prepaid discounts are calculated on the backend (per-product rules) when creating the Razorpay order.
-  // Keep the cart summary simple so it stays correct even when discount rules change.
-  const prepaidDiscountAmount = 0;
-  const payableAmount = cartTotal;
+  useEffect(() => {
+    if (!isAuthenticated || cart.length === 0) {
+      setPricingPreview(null);
+      return;
+    }
+
+    let ignore = false;
+    const paymentMethod =
+      paymentMode === "prepaid" ? "Prepaid (Razorpay UPI)" : "Cash on Delivery";
+
+    getCartPricingPreview({ token, paymentMethod })
+      .then((data) => {
+        if (!ignore) {
+          setPricingPreview(data);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setPricingPreview(null);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [cart.length, cartPricingKey, isAuthenticated, paymentMode, token]);
+
+  const originalTotalAmount = Number(pricingPreview?.originalTotalAmount ?? cartTotal);
+  const firstOrderDiscountAmount = Number(pricingPreview?.firstOrderDiscountAmount ?? 0);
+  const prepaidDiscountAmount = Number(pricingPreview?.prepaidDiscountAmount ?? 0);
+  const payableAmount = Number(
+    pricingPreview?.finalTotalAmount ??
+      Math.max(0, originalTotalAmount - firstOrderDiscountAmount - prepaidDiscountAmount)
+  );
+  const hasAnyOffer = firstOrderDiscountAmount > 0 || prepaidDiscountAmount > 0;
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -572,30 +609,37 @@ export default function CartPage() {
                   <span>{cartQuantity}</span>
                 </div>
 
-                <div className="flex justify-between border-t border-gray-100 pt-3 text-base font-bold text-gray-900">
-                  <span>Total amount</span>
-                  <span>{formatPrice(cartTotal)}</span>
+                <div className="flex justify-between border-t border-gray-100 pt-3 text-gray-600">
+                  <span>Items total</span>
+                  <span>{formatPrice(originalTotalAmount)}</span>
                 </div>
 
-                {paymentMode === "prepaid" && (
-                  <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
-                    Prepaid discount is applied at checkout.
+                {firstOrderDiscountAmount > 0 && (
+                  <div className="flex justify-between text-sm font-semibold text-emerald-700">
+                    <span>First order discount</span>
+                    <span>-{formatPrice(firstOrderDiscountAmount)}</span>
                   </div>
                 )}
 
                 {paymentMode === "prepaid" && prepaidDiscountAmount > 0 && (
                   <div className="flex justify-between text-sm font-semibold text-emerald-700">
-                    <span>Prepaid discount (Rs. 30 × {cartQuantity})</span>
+                    <span>Prepaid discount</span>
                     <span>-{formatPrice(prepaidDiscountAmount)}</span>
                   </div>
                 )}
 
-                {paymentMode === "prepaid" && prepaidDiscountAmount > 0 && (
-                  <div className="flex justify-between border-t border-gray-100 pt-3 text-base font-bold text-gray-900">
-                    <span>Payable now</span>
-                    <span>{formatPrice(payableAmount)}</span>
+                {hasAnyOffer && (
+                  <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+                    {paymentMode === "prepaid"
+                      ? `You save ${formatPrice(firstOrderDiscountAmount + prepaidDiscountAmount)} with this payment method.`
+                      : `You save ${formatPrice(firstOrderDiscountAmount)} on this order.`}
                   </div>
                 )}
+
+                <div className="flex justify-between border-t border-gray-100 pt-3 text-base font-bold text-gray-900">
+                  <span>{paymentMode === "prepaid" ? "Payable now" : "Total amount"}</span>
+                  <span>{formatPrice(payableAmount)}</span>
+                </div>
               </div>
 
               <div className="mt-5">

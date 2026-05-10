@@ -24,6 +24,14 @@ public class PaymentsController : ControllerBase
         public decimal Price { get; init; }
     }
 
+    private sealed class CartPricingPreview
+    {
+        public decimal OriginalTotalAmount { get; init; }
+        public decimal FirstOrderDiscountAmount { get; init; }
+        public decimal PrepaidDiscountAmount { get; init; }
+        public decimal FinalTotalAmount { get; init; }
+    }
+
     private readonly AppDbContext db;
     private readonly IHttpClientFactory httpClientFactory;
     private readonly RazorpayOptions razorpayOptions;
@@ -89,35 +97,13 @@ public class PaymentsController : ControllerBase
             });
         }
 
-        var cartItems = await (
-            from cartItem in db.CartItems
-            join product in db.Products on cartItem.ProductId equals product.Id
-            where cartItem.UserId == userId
-            select new CartPricingItem
-            {
-                ProductId = cartItem.ProductId,
-                Quantity = cartItem.Quantity,
-                Price = product.Price,
-            }
-        ).ToListAsync();
-
-        if (cartItems.Count == 0)
+        var pricing = await BuildCartPricingPreviewAsync(userId, userEmail, "Prepaid (Razorpay UPI)");
+        if (pricing == null)
         {
             return BadRequest(new { message = "Your cart is empty." });
         }
 
-        var hasPreviousOrders = await db.Orders
-            .AsNoTracking()
-            .AnyAsync(order => order.CustomerEmail == userEmail);
-
-        var originalTotalAmount = cartItems.Sum(item => item.Price * item.Quantity);
-        var firstOrderDiscountAmount = !hasPreviousOrders ? Math.Min(50m, originalTotalAmount) : 0m;
-        var subtotalAfterFirstDiscount = Math.Max(0m, originalTotalAmount - firstOrderDiscountAmount);
-
-        var prepaidDiscountAmount = await ComputePrepaidDiscountAsync(cartItems, subtotalAfterFirstDiscount);
-        var finalTotalAmount = Math.Max(0m, subtotalAfterFirstDiscount - prepaidDiscountAmount);
-
-        var amountInPaise = (int)Math.Round(finalTotalAmount * 100m, MidpointRounding.AwayFromZero);
+        var amountInPaise = (int)Math.Round(pricing.FinalTotalAmount * 100m, MidpointRounding.AwayFromZero);
         if (amountInPaise < 100)
         {
             return BadRequest(new { message = "Minimum payable amount is Rs. 1." });
@@ -188,11 +174,37 @@ public class PaymentsController : ControllerBase
             },
             pricing = new
             {
-                originalTotalAmount,
-                firstOrderDiscountAmount,
-                prepaidDiscountAmount,
-                finalTotalAmount,
+                originalTotalAmount = pricing.OriginalTotalAmount,
+                firstOrderDiscountAmount = pricing.FirstOrderDiscountAmount,
+                prepaidDiscountAmount = pricing.PrepaidDiscountAmount,
+                finalTotalAmount = pricing.FinalTotalAmount,
             }
+        });
+    }
+
+    [HttpGet("pricing-preview")]
+    public async Task<IActionResult> GetPricingPreview([FromQuery] string? paymentMethod = null)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "";
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var pricing = await BuildCartPricingPreviewAsync(userId, userEmail, paymentMethod);
+        if (pricing == null)
+        {
+            return BadRequest(new { message = "Your cart is empty." });
+        }
+
+        return Ok(new
+        {
+            originalTotalAmount = pricing.OriginalTotalAmount,
+            firstOrderDiscountAmount = pricing.FirstOrderDiscountAmount,
+            prepaidDiscountAmount = pricing.PrepaidDiscountAmount,
+            finalTotalAmount = pricing.FinalTotalAmount,
         });
     }
 
@@ -289,6 +301,55 @@ public class PaymentsController : ControllerBase
         var aBytes = Encoding.UTF8.GetBytes(a ?? "");
         var bBytes = Encoding.UTF8.GetBytes(b ?? "");
         return CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
+    }
+
+    private async Task<CartPricingPreview?> BuildCartPricingPreviewAsync(
+        string userId,
+        string userEmail,
+        string? paymentMethod
+    )
+    {
+        var cartItems = await (
+            from cartItem in db.CartItems
+            join product in db.Products on cartItem.ProductId equals product.Id
+            where cartItem.UserId == userId
+            select new CartPricingItem
+            {
+                ProductId = cartItem.ProductId,
+                Quantity = cartItem.Quantity,
+                Price = product.Price,
+            }
+        ).ToListAsync();
+
+        if (cartItems.Count == 0)
+        {
+            return null;
+        }
+
+        var hasPreviousOrders = await db.Orders
+            .AsNoTracking()
+            .AnyAsync(order => order.CustomerEmail == userEmail);
+
+        var originalTotalAmount = cartItems.Sum(item => item.Price * item.Quantity);
+        var firstOrderDiscountAmount = !hasPreviousOrders ? Math.Min(50m, originalTotalAmount) : 0m;
+        var subtotalAfterFirstDiscount = Math.Max(0m, originalTotalAmount - firstOrderDiscountAmount);
+        var resolvedPaymentMethod = paymentMethod?.Trim() ?? "Cash on Delivery";
+        var isPrepaid = resolvedPaymentMethod.StartsWith("Prepaid", StringComparison.OrdinalIgnoreCase)
+            || resolvedPaymentMethod.Contains("Online", StringComparison.OrdinalIgnoreCase)
+            || resolvedPaymentMethod.Contains("Razorpay", StringComparison.OrdinalIgnoreCase)
+            || resolvedPaymentMethod.Contains("UPI", StringComparison.OrdinalIgnoreCase);
+        var prepaidDiscountAmount = isPrepaid
+            ? await ComputePrepaidDiscountAsync(cartItems, subtotalAfterFirstDiscount)
+            : 0m;
+        var finalTotalAmount = Math.Max(0m, subtotalAfterFirstDiscount - prepaidDiscountAmount);
+
+        return new CartPricingPreview
+        {
+            OriginalTotalAmount = originalTotalAmount,
+            FirstOrderDiscountAmount = firstOrderDiscountAmount,
+            PrepaidDiscountAmount = prepaidDiscountAmount,
+            FinalTotalAmount = finalTotalAmount,
+        };
     }
 
     private async Task<decimal> ComputePrepaidDiscountAsync(
