@@ -73,6 +73,7 @@ export default function CartPage() {
   );
   const [addressFormExpanded, setAddressFormExpanded] = useState(savedAddresses.length === 0);
   const [checkoutError, setCheckoutError] = useState("");
+  const [checkoutNotice, setCheckoutNotice] = useState("");
   const [addressErrors, setAddressErrors] = useState({});
   const [placingOrder, setPlacingOrder] = useState(false);
   const [confirmOrderOpen, setConfirmOrderOpen] = useState(false);
@@ -248,10 +249,12 @@ export default function CartPage() {
     if (addressError) {
       setAddressErrors(fieldErrors);
       setCheckoutError("");
+      setCheckoutNotice("");
       return;
     }
 
     setAddressErrors({});
+    setCheckoutNotice("");
     setConfirmOrderOpen(true);
   };
 
@@ -278,11 +281,13 @@ export default function CartPage() {
       });
 
       setCheckoutError("");
+      setCheckoutNotice("");
       setSuccessOrder(order);
       refreshCart().catch(() => {
       });
     } catch (error) {
       setCheckoutError(error.message);
+      setCheckoutNotice("");
     } finally {
       setPlacingOrder(false);
     }
@@ -300,10 +305,12 @@ export default function CartPage() {
     if (addressError) {
       setAddressErrors(fieldErrors);
       setCheckoutError("");
+      setCheckoutNotice("");
       return;
     }
 
     setAddressErrors({});
+    setCheckoutNotice("");
 
     const savedAddress = handleSaveAddress();
 
@@ -329,6 +336,14 @@ export default function CartPage() {
           mobile: savedAddress.mobile,
         },
       });
+
+      if (orderData?.mode === "test") {
+        setCheckoutNotice(
+          "Razorpay is in TEST mode. Real UPI apps/cards will be declined; use Razorpay test credentials or switch to live keys."
+        );
+      } else {
+        setCheckoutNotice("");
+      }
 
       await new Promise((resolve, reject) => {
         openRazorpayCheckout({
@@ -357,6 +372,7 @@ export default function CartPage() {
               });
 
               setCheckoutError("");
+              setCheckoutNotice("");
               setSuccessOrder(placed);
               refreshCart().catch(() => {
               });
@@ -370,6 +386,7 @@ export default function CartPage() {
       });
     } catch (error) {
       setCheckoutError(getApiErrorMessage(error, "Unable to process online payment."));
+      setCheckoutNotice("");
     } finally {
       setPlacingOrder(false);
     }
@@ -401,6 +418,12 @@ export default function CartPage() {
         {(error || checkoutError) && (
           <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
             {checkoutError || error}
+          </div>
+        )}
+
+        {checkoutNotice && (
+          <div className="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm font-medium text-blue-800">
+            {checkoutNotice}
           </div>
         )}
 

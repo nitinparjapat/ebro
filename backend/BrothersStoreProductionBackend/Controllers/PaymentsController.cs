@@ -64,6 +64,24 @@ public class PaymentsController : ControllerBase
             return StatusCode(StatusCodes.Status501NotImplemented, new { message = "Online payments are not configured." });
         }
 
+        // Razorpay key id typically starts with rzp_ (e.g. rzp_test_*, rzp_live_*).
+        // Misconfigured keys lead to confusing 400s during checkout, so fail fast with a clear message.
+        if (!razorpayOptions.KeyId.StartsWith("rzp_", StringComparison.OrdinalIgnoreCase))
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented, new
+            {
+                message = "Online payments are not configured correctly (invalid Razorpay key id).",
+            });
+        }
+
+        if (razorpayOptions.KeySecret.StartsWith("rzp_", StringComparison.OrdinalIgnoreCase))
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented, new
+            {
+                message = "Online payments are not configured correctly (Razorpay key secret looks like a key id).",
+            });
+        }
+
         var cartItems = await (
             from cartItem in db.CartItems
             join product in db.Products on cartItem.ProductId equals product.Id
@@ -147,9 +165,12 @@ public class PaymentsController : ControllerBase
             return StatusCode(StatusCodes.Status502BadGateway, new { message = "Invalid payment gateway response." });
         }
 
+        var mode = razorpayOptions.KeyId.StartsWith("rzp_test_", StringComparison.OrdinalIgnoreCase) ? "test" : "live";
+
         return Ok(new
         {
             keyId = razorpayOptions.KeyId,
+            mode,
             merchantName = razorpayOptions.MerchantName,
             razorpayOrderId = orderId,
             amount = amountInPaise,
