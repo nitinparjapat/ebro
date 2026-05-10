@@ -1,4 +1,5 @@
 using BrothersStoreApi.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -46,4 +47,3 @@ public class AddPrepaidDiscountRules : Migration
             name: "PrepaidDiscountRules");
     }
 }
-
