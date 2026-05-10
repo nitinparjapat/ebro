@@ -381,7 +381,8 @@ export default function CartPage() {
               reject(error);
             }
           },
-          onDismiss: () => reject(new Error("Payment cancelled.")),
+          onDismiss: (dismissError) =>
+            reject(dismissError ?? new Error("Payment cancelled.")),
         });
       });
     } catch (error) {
