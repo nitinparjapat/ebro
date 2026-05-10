@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using BrothersStoreApi.Data;
+using BrothersStoreApi.Entities;
 using BrothersStoreApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -208,6 +209,41 @@ public class PaymentsController : ControllerBase
         });
     }
 
+    [AllowAnonymous]
+    [HttpGet("prepaid-offer-preview")]
+    public async Task<IActionResult> GetPrepaidOfferPreview([FromQuery] int productId, [FromQuery] int quantity = 1)
+    {
+        if (productId <= 0)
+        {
+            return BadRequest(new { message = "A valid product is required." });
+        }
+
+        var normalizedQuantity = Math.Max(1, quantity);
+        var product = await db.Products
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == productId && item.IsActive);
+
+        if (product == null)
+        {
+            return NotFound(new { message = "Product not found." });
+        }
+
+        var subtotal = product.Price * normalizedQuantity;
+        var rule = await FindMatchingPrepaidRuleAsync(productId, normalizedQuantity);
+        var discountPerItem = rule?.DiscountPerItem ?? await GetFallbackPrepaidDiscountPerItemAsync();
+        var discountAmount = Math.Min(discountPerItem * normalizedQuantity, subtotal);
+
+        return Ok(new
+        {
+            productId,
+            quantity = normalizedQuantity,
+            discountPerItem,
+            discountAmount,
+            finalAmount = Math.Max(0m, subtotal - discountAmount),
+            isRuleBased = rule != null,
+        });
+    }
+
     // Compatibility endpoint for simple integrations.
     // Mirrors Razorpay docs: create order -> return { order_id, amount, currency }.
     [HttpPost("/api/create-order")]
@@ -352,6 +388,26 @@ public class PaymentsController : ControllerBase
         };
     }
 
+    private async Task<PrepaidDiscountRule?> FindMatchingPrepaidRuleAsync(int productId, int quantity)
+    {
+        return await db.PrepaidDiscountRules
+            .AsNoTracking()
+            .Where(rule =>
+                rule.IsActive
+                && rule.ProductId == productId
+                && quantity >= rule.MinQuantity
+                && (!rule.MaxQuantity.HasValue || quantity <= rule.MaxQuantity.Value)
+            )
+            .OrderByDescending(rule => rule.MinQuantity)
+            .ThenBy(rule => rule.MaxQuantity ?? int.MaxValue)
+            .FirstOrDefaultAsync();
+    }
+
+    private static Task<decimal> GetFallbackPrepaidDiscountPerItemAsync()
+    {
+        return Task.FromResult(30m);
+    }
+
     private async Task<decimal> ComputePrepaidDiscountAsync(
         IEnumerable<CartPricingItem> cartItems,
         decimal subtotalAfterFirstDiscount
@@ -372,14 +428,11 @@ public class PaymentsController : ControllerBase
         decimal discount = 0m;
         foreach (var item in cartItems)
         {
-            var productId = item.ProductId;
-            var quantity = item.Quantity;
-
             var match = rules
                 .Where(rule =>
-                    rule.ProductId == productId
-                    && quantity >= rule.MinQuantity
-                    && (!rule.MaxQuantity.HasValue || quantity <= rule.MaxQuantity.Value)
+                    rule.ProductId == item.ProductId
+                    && item.Quantity >= rule.MinQuantity
+                    && (!rule.MaxQuantity.HasValue || item.Quantity <= rule.MaxQuantity.Value)
                 )
                 .OrderByDescending(rule => rule.MinQuantity)
                 .ThenBy(rule => rule.MaxQuantity ?? int.MaxValue)
@@ -387,7 +440,7 @@ public class PaymentsController : ControllerBase
 
             if (match != null && match.DiscountPerItem > 0)
             {
-                discount += match.DiscountPerItem * quantity;
+                discount += match.DiscountPerItem * item.Quantity;
             }
         }
 

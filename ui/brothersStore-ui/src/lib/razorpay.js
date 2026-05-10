@@ -56,6 +56,17 @@ export const getCartPricingPreview = async ({ token, paymentMethod }) => {
   return data;
 };
 
+export const getPrepaidOfferPreview = async ({ productId, quantity }) => {
+  const { data } = await apiClient.get("/payments/prepaid-offer-preview", {
+    params: {
+      productId,
+      quantity,
+    },
+  });
+
+  return data;
+};
+
 export const verifyRazorpayPayment = async ({
   token,
   razorpayOrderId,

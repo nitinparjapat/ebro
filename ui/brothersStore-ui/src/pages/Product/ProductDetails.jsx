@@ -20,6 +20,7 @@ import { useCart } from "../../context/CartContext";
 import { useProducts } from "../../context/ProductsContext";
 import { useReviews } from "../../context/ReviewsContext";
 import { useWishlist } from "../../context/WishlistContext";
+import { getPrepaidOfferPreview } from "../../lib/razorpay";
 import { getDiscountPercent } from "../../lib/storeApi";
 
 export default function ProductDetails() {
@@ -39,6 +40,7 @@ export default function ProductDetails() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [shouldLoadActiveVideo, setShouldLoadActiveVideo] = useState(false);
   const [isActiveVideoLoading, setIsActiveVideoLoading] = useState(false);
+  const [prepaidOffer, setPrepaidOffer] = useState(null);
 
   const productId = Number(id);
 
@@ -124,11 +126,40 @@ export default function ProductDetails() {
   const isWishlisted = wishlist.find((item) => item.id === product?.id);
   const cartItem = cart.find((item) => item.id === product?.id);
   const cartQuantity = cartItem?.quantity ?? 0;
+  const prepaidQuantity = Math.max(cartQuantity || 1, 1);
 
   const approvedReviews = getApprovedReviewsForProduct(productId);
   const discountPercent = product
     ? product.discountPercent || getDiscountPercent(product.oldPrice, product.price)
     : 0;
+
+  useEffect(() => {
+    if (!currentProductId) {
+      setPrepaidOffer(null);
+      return;
+    }
+
+    let ignore = false;
+
+    getPrepaidOfferPreview({
+      productId: currentProductId,
+      quantity: prepaidQuantity,
+    })
+      .then((data) => {
+        if (!ignore) {
+          setPrepaidOffer(data);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setPrepaidOffer(null);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [currentProductId, prepaidQuantity]);
 
   useEffect(() => {
     if (galleryMedia.length <= 1 || currentMedia?.type === "video") {
@@ -427,7 +458,11 @@ export default function ProductDetails() {
             </div>
             <div className="flex items-center gap-2">
               <FiTag className="shrink-0 text-slate-500" />
-              <span>Save on prepaid orders</span>
+              <span>
+                {prepaidOffer?.discountAmount > 0
+                  ? `Save Rs. ${Number(prepaidOffer.discountAmount).toLocaleString("en-IN")} on ${prepaidOffer.quantity} item${prepaidOffer.quantity > 1 ? "s" : ""} with prepaid`
+                  : "Save on prepaid orders"}
+              </span>
             </div>
           </div>
 
