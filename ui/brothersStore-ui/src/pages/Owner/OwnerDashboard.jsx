@@ -1083,10 +1083,13 @@ export default function OwnerDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {prepaidDiscountRules.map((rule) => (
+                      {prepaidDiscountRules.map((rule) => {
+                        const matchedProduct = products.find((product) => product.id === rule.productId);
+
+                        return (
                         <tr key={`prepaid-rule-${rule.id}`} className="bg-white">
                           <td className="px-3 py-2 font-semibold text-gray-900">
-                            {rule.productName || products.find((p) => p.id === rule.productId)?.title || `#${rule.productId}`}
+                            {rule.productName || matchedProduct?.title || `#${rule.productId}`}
                           </td>
                           <td className="px-3 py-2 text-gray-700">{rule.minQuantity}</td>
                           <td className="px-3 py-2 text-gray-700">{rule.maxQuantity ?? "—"}</td>
@@ -1101,17 +1104,29 @@ export default function OwnerDashboard() {
                             </span>
                           </td>
                           <td className="px-3 py-2 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteDiscountRule(rule.id)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:border-gray-300"
-                            >
-                              <FiTrash2 />
-                              Delete
-                            </button>
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => matchedProduct && handleEditProduct(matchedProduct)}
+                                disabled={!matchedProduct}
+                                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                <FiEdit3 />
+                                Edit product
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteDiscountRule(rule.id)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:border-gray-300"
+                              >
+                                <FiTrash2 />
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
