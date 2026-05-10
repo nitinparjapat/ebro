@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { apiClient, createAuthHeaders } from "../lib/api";
 import {
   emptyAddress,
+  cleanMobile,
+  cleanPincode,
   normalizeAddress,
   normalizeAddressBook,
 } from "../lib/address";
@@ -317,6 +319,69 @@ export function AuthProvider({ children }) {
     setAuthModalOpen(false);
   };
 
+  const mapServerAddressToProfile = (address) =>
+    normalizeAddress({
+      id: String(address?.id ?? ""),
+      label: address?.label ?? "",
+      isDefault: Boolean(address?.isDefault),
+      fullName: address?.fullName ?? "",
+      mobile: address?.mobile ?? "",
+      alternateMobile: address?.alternateMobile ?? "",
+      pincode: address?.pincode ?? "",
+      addressLine1: address?.addressLine1 ?? "",
+      addressLine2: address?.addressLine2 ?? "",
+      landmark: address?.landmark ?? "",
+      city: address?.city ?? "",
+      state: address?.state ?? "",
+    });
+
+  const mapProfileAddressToServer = (address) => ({
+    label: address.label ?? "",
+    isDefault: Boolean(address.isDefault),
+    fullName: address.fullName ?? "",
+    mobile: cleanMobile(address.mobile ?? ""),
+    alternateMobile: cleanMobile(address.alternateMobile ?? ""),
+    pincode: cleanPincode(address.pincode ?? ""),
+    addressLine1: address.addressLine1 ?? "",
+    addressLine2: address.addressLine2 ?? "",
+    landmark: address.landmark ?? "",
+    city: address.city ?? "",
+    state: address.state ?? "",
+    country: "India",
+  });
+
+  const refreshServerAddresses = async (authToken) => {
+    if (!authToken) {
+      return [];
+    }
+
+    const { data } = await apiClient.get("/users/me/addresses", {
+      headers: createAuthHeaders(authToken),
+    });
+
+    const addresses = Array.isArray(data) ? data : [];
+    return normalizeAddressBook(addresses.map(mapServerAddressToProfile));
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated || !token) {
+      return;
+    }
+
+    refreshServerAddresses(token)
+      .then((addresses) => {
+        setProfile((currentProfile) =>
+          normalizeAddress({
+            ...currentProfile,
+            savedAddresses: addresses,
+          })
+        );
+      })
+      .catch(() => {
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, token]);
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return undefined;
@@ -386,6 +451,22 @@ export function AuthProvider({ children }) {
         })
       );
       setAuthModalOpen(false);
+
+      refreshServerAddresses(nextSession.token)
+        .then((addresses) => {
+          if (addresses.length === 0) {
+            return;
+          }
+
+          setProfile((currentProfile) =>
+            normalizeAddress({
+              ...currentProfile,
+              savedAddresses: addresses,
+            })
+          );
+        })
+        .catch(() => {
+        });
 
       return data;
     } catch (error) {
@@ -486,9 +567,148 @@ export function AuthProvider({ children }) {
         completeGoogleLogin,
         logout,
         updateProfile,
-        saveAddress,
-        setDefaultAddress,
-        removeAddress,
+        saveAddress: async (address) => {
+          const nextAddress = normalizeAddress(address);
+
+          setProfile((currentProfile) => {
+            const existingAddresses = normalizeAddressBook(currentProfile.savedAddresses);
+            const shouldBeDefault = nextAddress.isDefault || existingAddresses.length === 0;
+            const nextAddresses = existingAddresses.some(
+              (item) => item.id === nextAddress.id
+            )
+              ? existingAddresses.map((item) =>
+                  item.id === nextAddress.id
+                    ? { ...nextAddress, isDefault: shouldBeDefault || item.isDefault }
+                    : {
+                        ...item,
+                        isDefault: shouldBeDefault ? false : item.isDefault,
+                      }
+                )
+              : [
+                  ...existingAddresses.map((item) => ({
+                    ...item,
+                    isDefault: shouldBeDefault ? false : item.isDefault,
+                  })),
+                  { ...nextAddress, isDefault: shouldBeDefault },
+                ];
+
+            const normalizedAddresses = normalizeAddressBook(nextAddresses);
+            const defaultAddress =
+              normalizedAddresses.find((addressItem) => addressItem.isDefault) ??
+              normalizedAddresses[0] ??
+              nextAddress;
+
+            return normalizeAddress({
+              ...currentProfile,
+              ...defaultAddress,
+              savedAddresses: normalizedAddresses,
+            });
+          });
+
+          if (token) {
+            const payload = mapProfileAddressToServer(nextAddress);
+            const numericId = Number.parseInt(String(nextAddress.id), 10);
+
+            try {
+              const result = Number.isFinite(numericId)
+                ? await apiClient.put(`/users/me/addresses/${numericId}`, payload, {
+                    headers: createAuthHeaders(token),
+                  })
+                : await apiClient.post("/users/me/addresses", payload, {
+                    headers: createAuthHeaders(token),
+                  });
+
+              const serverAddresses = await refreshServerAddresses(token);
+              setProfile((currentProfile) =>
+                normalizeAddress({
+                  ...currentProfile,
+                  savedAddresses: serverAddresses,
+                })
+              );
+
+              return normalizeAddress({ ...nextAddress, id: String(result?.data?.id ?? nextAddress.id) });
+            } catch {
+              // Keep local copy even if server save fails.
+            }
+          }
+
+          return nextAddress;
+        },
+        setDefaultAddress: async (addressId) => {
+          setProfile((currentProfile) => {
+            const nextAddresses = normalizeAddressBook(currentProfile.savedAddresses).map(
+              (address) => ({
+                ...address,
+                isDefault: address.id === addressId,
+              })
+            );
+            const defaultAddress =
+              nextAddresses.find((address) => address.isDefault) ?? nextAddresses[0];
+
+            return normalizeAddress({
+              ...currentProfile,
+              ...(defaultAddress ?? {}),
+              savedAddresses: nextAddresses,
+            });
+          });
+
+          if (token) {
+            const numericId = Number.parseInt(String(addressId), 10);
+            if (Number.isFinite(numericId)) {
+              try {
+                await apiClient.put(`/users/me/addresses/${numericId}/default`, null, {
+                  headers: createAuthHeaders(token),
+                });
+
+                const serverAddresses = await refreshServerAddresses(token);
+                setProfile((currentProfile) =>
+                  normalizeAddress({
+                    ...currentProfile,
+                    savedAddresses: serverAddresses,
+                  })
+                );
+              } catch {
+              }
+            }
+          }
+        },
+        removeAddress: async (addressId) => {
+          setProfile((currentProfile) => {
+            const nextAddresses = normalizeAddressBook(currentProfile.savedAddresses).filter(
+              (address) => address.id !== addressId
+            );
+            const normalizedAddresses = normalizeAddressBook(nextAddresses);
+            const defaultAddress =
+              normalizedAddresses.find((address) => address.isDefault) ??
+              normalizedAddresses[0];
+
+            return normalizeAddress({
+              ...currentProfile,
+              ...(defaultAddress ?? {}),
+              savedAddresses: normalizedAddresses,
+            });
+          });
+
+          if (token) {
+            const numericId = Number.parseInt(String(addressId), 10);
+            if (Number.isFinite(numericId)) {
+              try {
+                await apiClient.delete(`/users/me/addresses/${numericId}`, {
+                  headers: createAuthHeaders(token),
+                });
+
+                const serverAddresses = await refreshServerAddresses(token);
+                setProfile((currentProfile) =>
+                  normalizeAddress({
+                    ...currentProfile,
+                    savedAddresses: serverAddresses,
+                  })
+                );
+              } catch {
+              }
+            }
+          }
+        },
         addAdmin,
       }}
     >
