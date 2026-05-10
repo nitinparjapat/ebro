@@ -363,6 +363,34 @@ export function AuthProvider({ children }) {
     return normalizeAddressBook(addresses.map(mapServerAddressToProfile));
   };
 
+  const isAuthenticated = Boolean(session?.token);
+  const token = session?.token ?? "";
+  const currentUser = session
+    ? {
+        id: session.userId,
+        phoneNumber: session.phoneNumber,
+        fullName:
+          deriveDisplayName(
+            {
+              fullName: profile.fullName,
+              name: session.fullName,
+            },
+            deriveNameFromEmail(profile.email || session.email || "")
+          ) || "",
+        email: profile.email || session.email || "",
+        roles: session.roles ?? [],
+        picture: session.picture ?? "",
+      }
+    : null;
+  const currentUserEmail = normalizeEmail(currentUser?.email ?? "");
+  const hasAdminRole = currentUser?.roles?.some((role) =>
+    ["admin", "owner"].includes(String(role).toLowerCase())
+  );
+  const isAdmin =
+    isAuthenticated &&
+    (Boolean(currentUserEmail && adminEmails.includes(currentUserEmail)) ||
+      Boolean(hasAdminRole));
+
   useEffect(() => {
     if (!isAuthenticated || !token) {
       return;
@@ -480,34 +508,6 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   };
-
-  const isAuthenticated = Boolean(session?.token);
-  const token = session?.token ?? "";
-  const currentUser = session
-    ? {
-        id: session.userId,
-        phoneNumber: session.phoneNumber,
-        fullName:
-          deriveDisplayName(
-            {
-              fullName: profile.fullName,
-              name: session.fullName,
-            },
-            deriveNameFromEmail(profile.email || session.email || "")
-          ) || "",
-        email: profile.email || session.email || "",
-        roles: session.roles ?? [],
-        picture: session.picture ?? "",
-      }
-    : null;
-  const currentUserEmail = normalizeEmail(currentUser?.email ?? "");
-  const hasAdminRole = currentUser?.roles?.some((role) =>
-    ["admin", "owner"].includes(String(role).toLowerCase())
-  );
-  const isAdmin =
-    isAuthenticated &&
-    (Boolean(currentUserEmail && adminEmails.includes(currentUserEmail)) ||
-      Boolean(hasAdminRole));
 
   const addAdmin = async (email) => {
     const normalizedEmail = normalizeEmail(email);
