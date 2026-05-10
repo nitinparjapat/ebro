@@ -4,10 +4,10 @@ export default function HeroBanner() {
   const navigate = useNavigate();
 
   return (
-    <section className="paper-bg relative overflow-hidden px-4 pt-4 md:px-6 md:pt-8">
+    <section className="paper-bg relative overflow-hidden px-4 py-3 md:px-6 md:py-6">
       <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-[1.12fr_0.88fr] md:gap-5">
         <div className="genz-tape paper-stack">
-          <div className="genz-paper paper-panel rounded-[1.7rem] p-4 md:rounded-[2rem] md:p-7">
+          <div className="genz-paper paper-panel rounded-[1.7rem] p-4 md:rounded-[2rem] md:p-6">
             <div className="flex flex-wrap items-center gap-2 md:gap-3">
               <span className="genz-sticker px-3 py-2 text-[11px] md:px-4 md:py-2">BrothersStore Drop</span>
               <span className="rounded-full bg-[#ffd60a] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-900 md:px-3 md:text-[11px]">
@@ -15,19 +15,19 @@ export default function HeroBanner() {
               </span>
             </div>
 
-            <p className="genz-kicker mt-4 md:mt-5">Curated For Indian Homes</p>
+            <p className="genz-kicker mt-3 md:mt-4">Curated For Indian Homes</p>
 
-            <h2 className="mt-2.5 max-w-3xl text-[2.15rem] font-black leading-[0.94] tracking-[-0.05em] text-slate-950 sm:text-5xl md:mt-3 md:text-[4.25rem]">
+            <h2 className="mt-2 max-w-3xl text-[1.85rem] font-black leading-[0.98] tracking-[-0.05em] text-slate-950 sm:text-4xl md:mt-3 md:text-[3.6rem]">
               Your room
               <span className="genz-highlight ml-2 inline">deserves details</span>
               , not boring shopping.
             </h2>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-700 md:mt-4 md:text-base md:leading-7">
-              Find wall decor, organizers, soft utility pieces, and everyday home accents that make a space feel cooler, cleaner, and more personal.
+            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-700 md:mt-3 md:text-base md:leading-7">
+              Wall decor, organizers, and small upgrades that make a space feel cleaner, warmer, and more personal.
             </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2 md:mt-6 md:gap-3">
+            <div className="mt-3 flex flex-wrap items-center gap-2 md:mt-5 md:gap-3">
               <button
                 type="button"
                 onClick={() => navigate("/?category=Home Decos")}
@@ -46,16 +46,16 @@ export default function HeroBanner() {
               </span>
             </div>
 
-            <div className="genz-divider mt-5 md:mt-7" />
+            <div className="genz-divider mt-6 hidden md:block" />
 
-            <div className="mt-4 grid gap-2 text-sm font-semibold text-slate-700 sm:grid-cols-3 md:mt-5 md:gap-3">
+            <div className="mt-5 hidden grid-cols-3 gap-3 text-sm font-semibold text-slate-700 md:grid">
               <div className="rounded-2xl bg-white/85 px-3 py-2.5 shadow-sm md:px-4 md:py-3">
                 Decor that softens blank walls and shelves.
               </div>
               <div className="rounded-2xl bg-white/85 px-3 py-2.5 shadow-sm md:px-4 md:py-3">
                 Useful picks for kitchens, desks, and daily routines.
               </div>
-              <div className="hidden rounded-2xl bg-white/85 px-4 py-3 shadow-sm sm:block">
+              <div className="rounded-2xl bg-white/85 px-4 py-3 shadow-sm">
                 Small upgrades that make homes feel styled.
               </div>
             </div>
