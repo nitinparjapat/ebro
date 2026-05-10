@@ -1200,7 +1200,9 @@ export default function OwnerDashboard() {
                       <th className="py-3 pr-3 font-semibold">Orders</th>
                       <th className="py-3 pr-3 font-semibold">Status</th>
                       <th className="py-3 pr-3 font-semibold">Media</th>
-                      <th className="py-3 text-right font-semibold">Actions</th>
+                      <th className="sticky right-0 bg-white py-3 pl-3 text-right font-semibold shadow-[-10px_0_14px_-14px_rgba(0,0,0,0.35)]">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1269,21 +1271,22 @@ export default function OwnerDashboard() {
                             )}
                           </span>
                         </td>
-                        <td className="py-3 text-right">
+                        <td className="sticky right-0 bg-white py-3 pl-3 text-right shadow-[-10px_0_14px_-14px_rgba(0,0,0,0.35)]">
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
                               onClick={() => handleEditProduct(product)}
-                              className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 text-gray-700"
+                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400"
                               aria-label={`Edit ${product.title}`}
                             >
                               <FiEdit3 />
+                              Edit
                             </button>
                             <button
                               type="button"
                               onClick={() => handleToggleActive(product)}
                               disabled={saving}
-                              className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 text-gray-700 disabled:opacity-60"
+                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400 disabled:opacity-60"
                               aria-label={
                                 product.isActive
                                   ? `Deactivate ${product.title}`
@@ -1291,6 +1294,7 @@ export default function OwnerDashboard() {
                               }
                             >
                               {product.isActive ? <FiToggleRight /> : <FiToggleLeft />}
+                              {product.isActive ? "Disable" : "Enable"}
                             </button>
                           </div>
                         </td>
