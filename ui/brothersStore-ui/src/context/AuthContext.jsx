@@ -317,6 +317,42 @@ export function AuthProvider({ children }) {
     setAuthModalOpen(false);
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const RELOAD_KEY = "brothersStoreSessionExpiredReloaded";
+
+    const handleAuthExpired = () => {
+      // Clear stale auth first, then reload once so all screens reset cleanly.
+      logout();
+
+      if (!window.sessionStorage.getItem(RELOAD_KEY)) {
+        window.sessionStorage.setItem(RELOAD_KEY, "1");
+        window.location.reload();
+        return;
+      }
+
+      // If we already reloaded once, keep the user on the page and show login.
+      setAuthModalOpen(true);
+    };
+
+    const handlePostReload = () => {
+      if (window.sessionStorage.getItem(RELOAD_KEY)) {
+        window.sessionStorage.removeItem(RELOAD_KEY);
+        setAuthModalOpen(true);
+      }
+    };
+
+    window.addEventListener("brothersStore:auth-expired", handleAuthExpired);
+    handlePostReload();
+
+    return () => {
+      window.removeEventListener("brothersStore:auth-expired", handleAuthExpired);
+    };
+  }, []);
+
   const completeGoogleLogin = async (idToken) => {
     setLoading(true);
 
