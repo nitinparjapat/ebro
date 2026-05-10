@@ -111,12 +111,18 @@ export const openRazorpayCheckout = ({
 
   const instance = new window.Razorpay(options);
   instance.on("payment.failed", (event) => {
-    const description =
-      event?.error?.description ||
-      event?.error?.reason ||
-      event?.error?.code ||
-      "Payment failed.";
-    onDismiss?.(new Error(description));
+    const error = event?.error ?? {};
+    const details = [
+      error.code && `code: ${error.code}`,
+      error.source && `source: ${error.source}`,
+      error.step && `step: ${error.step}`,
+      error.reason && `reason: ${error.reason}`,
+      error.description && `description: ${error.description}`,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+
+    onDismiss?.(new Error(details || "Payment failed."));
   });
   instance.open();
   return instance;
