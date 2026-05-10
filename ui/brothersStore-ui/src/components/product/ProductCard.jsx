@@ -186,7 +186,7 @@ function ProductCard({ product }) {
               aria-hidden="true"
               className="cod-button__spark cod-button__spark--right"
             />
-            <span className="cod-button__label">Buy (Cash on Delivery)</span>
+            <span className="cod-button__label">Buy Now</span>
           </button>
         </div>
       </div>
