@@ -893,10 +893,14 @@ export default function CartPage() {
       </main>
 
       {confirmOrderOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900">Confirm Order</h3>
-            <p className="mt-2 text-sm text-slate-600">
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-[2px]">
+          <div className="genz-tape paper-stack w-full max-w-sm">
+            <div className="genz-paper paper-panel rounded-[2rem] p-5 shadow-[0_24px_60px_rgba(15,23,42,0.22)]">
+            <p className="genz-kicker">Confirm</p>
+            <h3 className="mt-1 text-xl font-black tracking-[-0.03em] text-slate-950">
+              Confirm Order
+            </h3>
+            <p className="mt-2 text-sm font-semibold text-slate-700">
               {confirmOrderMode === "prepaid"
                 ? "Proceed with this prepaid order and continue to payment?"
                 : "Place this cash-on-delivery order now?"}
@@ -905,17 +909,18 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={() => setConfirmOrderOpen(false)}
-                className="rounded-xl border border-slate-300 py-2.5 text-sm font-semibold text-slate-700"
+                className="rounded-2xl border border-slate-900/15 bg-white/70 py-2.5 text-sm font-black text-slate-800 shadow-sm"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmPlaceOrder}
-                className="rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white"
+                className="rounded-2xl bg-slate-950 py-2.5 text-sm font-black text-white shadow-[0_14px_26px_rgba(15,23,42,0.18)]"
               >
                 {confirmOrderMode === "prepaid" ? "Yes, Continue" : "Yes, Place Order"}
               </button>
+            </div>
             </div>
           </div>
         </div>
