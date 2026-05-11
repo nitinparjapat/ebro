@@ -160,20 +160,29 @@ export function ProductsProvider({ children }) {
           });
       const savedProduct = normalizeProduct(data);
 
+      // Ensure we display what the server actually persisted (helps avoid any stale/UI-only state).
+      // Also keeps product details consistent across devices after a save.
+      const { data: persistedData } = await apiClient.get(`/products/${savedProduct.id}`, {
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      });
+      const persistedProduct = normalizeProduct(persistedData);
+
       setProducts((currentProducts) =>
-        currentProducts.some((item) => item.id === savedProduct.id)
+        currentProducts.some((item) => item.id === persistedProduct.id)
           ? currentProducts.map((item) =>
-              item.id === savedProduct.id ? savedProduct : item
+              item.id === persistedProduct.id ? persistedProduct : item
             )
-          : [savedProduct, ...currentProducts]
+          : [persistedProduct, ...currentProducts]
       );
       setProductDetails((currentDetails) => ({
         ...currentDetails,
-        [savedProduct.id]: savedProduct,
+        [persistedProduct.id]: persistedProduct,
       }));
       setError("");
 
-      return savedProduct;
+      return persistedProduct;
     } catch (apiError) {
       throw new Error(getApiErrorMessage(apiError, "Unable to save product."), {
         cause: apiError,
