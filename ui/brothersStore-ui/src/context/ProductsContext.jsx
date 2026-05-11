@@ -242,9 +242,16 @@ export function ProductsProvider({ children }) {
     setSaving(true);
 
     try {
-      await apiClient.delete(`/products/${productId}`, {
-        headers: createAuthHeaders(token),
-      });
+      try {
+        await apiClient.delete(`/products/${productId}`, {
+          headers: createAuthHeaders(token),
+        });
+      } catch (apiError) {
+        // Treat "already deleted" as success to keep UI consistent.
+        if (apiError?.response?.status !== 404) {
+          throw apiError;
+        }
+      }
 
       setProducts((currentProducts) =>
         currentProducts.filter((product) => product.id !== productId)

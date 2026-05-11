@@ -299,45 +299,47 @@ export default function OwnerDashboard() {
     };
   }, [ownerOrders, pendingReviews.length, products]);
 
-  const productOrderStats = useMemo(() => {
-    const statsByProductId = {};
+	  const productOrderStats = useMemo(() => {
+	    const statsByProductId = {};
 
-    for (const product of products) {
-      statsByProductId[product.id] = {
-        product,
-        orderCount: 0,
-        quantity: 0,
-        revenue: 0,
-        customers: [],
-      };
-    }
+	    for (const product of products) {
+	      statsByProductId[product.id] = {
+	        product,
+	        existsInCatalog: true,
+	        orderCount: 0,
+	        quantity: 0,
+	        revenue: 0,
+	        customers: [],
+	      };
+	    }
 
 	    for (const order of ownerOrders) {
 	      for (const item of order.items) {
-	        if (!statsByProductId[item.id]) {
-	          const fallbackPrice = Number(item.price ?? 0);
-	          statsByProductId[item.id] = {
-	            product: {
-	              id: item.id,
-	              title: item.title,
-	              description: "",
-	              images: [],
-	              category: "Uncategorized",
-	              stock: 0,
-	              price: fallbackPrice,
-	              oldPrice: fallbackPrice,
-	              originalPrice: fallbackPrice,
-	              discountPercent: 0,
-	              videos: [],
-	              hasVideo: false,
-	              isActive: false,
-	            },
-	            orderCount: 0,
-	            quantity: 0,
-	            revenue: 0,
-	            customers: [],
-	          };
-	        }
+		        if (!statsByProductId[item.id]) {
+		          const fallbackPrice = Number(item.price ?? 0);
+		          statsByProductId[item.id] = {
+		            product: {
+		              id: item.id,
+		              title: item.title,
+		              description: "",
+		              images: [],
+		              category: "Uncategorized",
+		              stock: 0,
+		              price: fallbackPrice,
+		              oldPrice: fallbackPrice,
+		              originalPrice: fallbackPrice,
+		              discountPercent: 0,
+		              videos: [],
+		              hasVideo: false,
+		              isActive: false,
+		            },
+		            existsInCatalog: false,
+		            orderCount: 0,
+		            quantity: 0,
+		            revenue: 0,
+		            customers: [],
+		          };
+		        }
 
         statsByProductId[item.id].orderCount += 1;
         statsByProductId[item.id].quantity += item.quantity;
@@ -1175,11 +1177,12 @@ export default function OwnerDashboard() {
               <p className="mt-5 text-sm text-gray-500">No products yet.</p>
             ) : (
               <>
-              <div className="mt-4 space-y-3 md:hidden">
-                {productOrderStats.map((productStat) => {
-                  const product = productStat.product;
-                  const discountPercent = getDiscountPercent(product.oldPrice, product.price);
-                  const hasDiscount = product.oldPrice > product.price && discountPercent > 0;
+	              <div className="mt-4 space-y-3 md:hidden">
+	                {productOrderStats.map((productStat) => {
+	                  const product = productStat.product;
+	                  const canManageProduct = Boolean(productStat.existsInCatalog);
+	                  const discountPercent = getDiscountPercent(product.oldPrice, product.price);
+	                  const hasDiscount = product.oldPrice > product.price && discountPercent > 0;
 
                   return (
                     <article key={`mobile-${product.id}`} className="rounded-lg border border-gray-200 p-3">
@@ -1235,34 +1238,40 @@ export default function OwnerDashboard() {
                         </div>
                       </div>
 
-	                      <div className="mt-3 flex justify-end gap-2">
-	                        <button
-	                          type="button"
-	                          onClick={() => handleEditProduct(product)}
-	                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700"
-	                          aria-label={`Edit ${product.title}`}
-	                        >
-	                          <FiEdit3 />
-	                        </button>
-	                        <button
-	                          type="button"
-	                          onClick={() => handleDeleteProduct(product)}
-	                          disabled={saving}
-	                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-red-600 disabled:opacity-60"
-	                          aria-label={`Delete ${product.title}`}
-	                        >
-	                          <FiTrash2 />
-	                        </button>
-	                        <button
-	                          type="button"
-	                          onClick={() => handleToggleActive(product)}
-	                          disabled={saving}
-	                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700 disabled:opacity-60"
-                          aria-label={product.isActive ? `Deactivate ${product.title}` : `Activate ${product.title}`}
-                        >
-                          {product.isActive ? <FiToggleRight /> : <FiToggleLeft />}
-                        </button>
-                      </div>
+		                      {canManageProduct && (
+		                        <div className="mt-3 flex justify-end gap-2">
+		                          <button
+		                            type="button"
+		                            onClick={() => handleEditProduct(product)}
+		                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700"
+		                            aria-label={`Edit ${product.title}`}
+		                          >
+		                            <FiEdit3 />
+		                          </button>
+		                          <button
+		                            type="button"
+		                            onClick={() => handleDeleteProduct(product)}
+		                            disabled={saving}
+		                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-red-600 disabled:opacity-60"
+		                            aria-label={`Delete ${product.title}`}
+		                          >
+		                            <FiTrash2 />
+		                          </button>
+		                          <button
+		                            type="button"
+		                            onClick={() => handleToggleActive(product)}
+		                            disabled={saving}
+		                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700 disabled:opacity-60"
+		                            aria-label={
+		                              product.isActive
+		                                ? `Deactivate ${product.title}`
+		                                : `Activate ${product.title}`
+		                            }
+		                          >
+		                            {product.isActive ? <FiToggleRight /> : <FiToggleLeft />}
+		                          </button>
+		                        </div>
+		                      )}
                     </article>
                   );
                 })}
@@ -1286,9 +1295,10 @@ export default function OwnerDashboard() {
                   </thead>
                   <tbody>
                     {productOrderStats.map((productStat) => {
-                      const product = productStat.product;
-                      const discountPercent = getDiscountPercent(product.oldPrice, product.price);
-                      const hasDiscount = product.oldPrice > product.price && discountPercent > 0;
+	                      const product = productStat.product;
+	                      const canManageProduct = Boolean(productStat.existsInCatalog);
+	                      const discountPercent = getDiscountPercent(product.oldPrice, product.price);
+	                      const hasDiscount = product.oldPrice > product.price && discountPercent > 0;
 
                       return (
                       <tr key={product.id} className="border-b border-gray-100">
@@ -1364,43 +1374,45 @@ export default function OwnerDashboard() {
                             )}
                           </span>
                         </td>
-                        <td className="py-3 pl-3 text-right">
-	                          <div className="flex justify-end gap-2">
-	                            <button
-	                              type="button"
-	                              onClick={() => handleEditProduct(product)}
-	                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400"
-	                              aria-label={`Edit ${product.title}`}
-	                            >
-	                              <FiEdit3 />
-	                              Edit
-	                            </button>
-	                            <button
-	                              type="button"
-	                              onClick={() => handleDeleteProduct(product)}
-	                              disabled={saving}
-	                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-red-600 hover:border-gray-400 disabled:opacity-60"
-	                              aria-label={`Delete ${product.title}`}
-	                            >
-	                              <FiTrash2 />
-	                              Delete
-	                            </button>
-	                            <button
-	                              type="button"
-	                              onClick={() => handleToggleActive(product)}
-	                              disabled={saving}
-	                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400 disabled:opacity-60"
-                              aria-label={
-                                product.isActive
-                                  ? `Deactivate ${product.title}`
-                                  : `Activate ${product.title}`
-                              }
-                            >
-                              {product.isActive ? <FiToggleRight /> : <FiToggleLeft />}
-                              {product.isActive ? "Disable" : "Enable"}
-                            </button>
-                          </div>
-                        </td>
+	                        <td className="py-3 pl-3 text-right">
+	                          {canManageProduct && (
+	                            <div className="flex justify-end gap-2">
+	                              <button
+	                                type="button"
+	                                onClick={() => handleEditProduct(product)}
+	                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400"
+	                                aria-label={`Edit ${product.title}`}
+	                              >
+	                                <FiEdit3 />
+	                                Edit
+	                              </button>
+	                              <button
+	                                type="button"
+	                                onClick={() => handleDeleteProduct(product)}
+	                                disabled={saving}
+	                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-red-600 hover:border-gray-400 disabled:opacity-60"
+	                                aria-label={`Delete ${product.title}`}
+	                              >
+	                                <FiTrash2 />
+	                                Delete
+	                              </button>
+	                              <button
+	                                type="button"
+	                                onClick={() => handleToggleActive(product)}
+	                                disabled={saving}
+	                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400 disabled:opacity-60"
+	                                aria-label={
+	                                  product.isActive
+	                                    ? `Deactivate ${product.title}`
+	                                    : `Activate ${product.title}`
+	                                }
+	                              >
+	                                {product.isActive ? <FiToggleRight /> : <FiToggleLeft />}
+	                                {product.isActive ? "Disable" : "Enable"}
+	                              </button>
+	                            </div>
+	                          )}
+	                        </td>
                       </tr>
                       );
                     })}
