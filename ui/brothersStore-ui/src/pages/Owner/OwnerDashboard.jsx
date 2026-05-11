@@ -40,7 +40,11 @@ const emptyProductForm = {
 const inputClass =
   "mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 text-sm outline-none focus:border-black";
 
-const formatPrice = (amount) => `Rs. ${amount.toLocaleString("en-IN")}`;
+const formatPrice = (amount) => {
+  const value = Number(amount ?? 0);
+  const normalized = Number.isFinite(value) ? value : 0;
+  return `Rs. ${normalized.toLocaleString("en-IN")}`;
+};
 
 const formatDate = (dateValue) =>
   new Date(dateValue).toLocaleDateString("en-IN", {
