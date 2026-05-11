@@ -255,7 +255,11 @@ public class ProductsController : ControllerBase
         product.Name = request.Name?.Trim() ?? "";
         product.Description = request.Description?.Trim() ?? "";
         var price = request.Price;
-        var originalPrice = request.OriginalPrice > 0 ? request.OriginalPrice : price;
+        var originalPrice = request.OriginalPrice > 0
+            ? request.OriginalPrice
+            : product.OriginalPrice > 0
+                ? product.OriginalPrice
+                : price;
         if (originalPrice < price)
         {
             originalPrice = price;
