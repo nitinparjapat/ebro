@@ -83,11 +83,15 @@ export const buildProductPayload = (product) => {
         .map((video) => video.trim())
         .filter(Boolean);
 
+  const price = toNumber(product.price);
+  const originalPriceRaw = toNumber(product.originalPrice || product.oldPrice);
+  const originalPrice = originalPriceRaw > 0 ? originalPriceRaw : price;
+
   return {
     name: product.title?.trim() ?? product.name?.trim() ?? "",
     description: product.description?.trim() ?? "",
-    originalPrice: toNumber(product.originalPrice || product.oldPrice || product.price),
-    price: toNumber(product.price),
+    originalPrice,
+    price,
     categoryName: product.category?.trim() ?? product.categoryName?.trim() ?? "",
     categoryId: toNumber(product.categoryId),
     stock: toNumber(product.stock),
