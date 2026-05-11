@@ -63,7 +63,7 @@ export default function OrdersPage() {
           <div className="rounded-lg bg-white p-5 shadow-sm md:p-6">
             <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Track all your previous COD purchases in one place.
+              Show all orders.
             </p>
           </div>
         </header>
