@@ -472,8 +472,6 @@ export default function ProductDetails() {
             {product.stock > 0 ? `${product.stock} pcs left` : "Out of stock"}
           </p>
 
-          <p className="mt-4 text-gray-600">{product.description}</p>
-
           <div className="mt-6 flex gap-3">
             <div className="grid flex-1 gap-3">
               {cartQuantity > 0 ? (
@@ -545,6 +543,8 @@ export default function ProductDetails() {
             </button>
           </div>
         </div>
+
+        <p className="mt-5 text-gray-600">{product.description}</p>
       </div>
 
       <div className="mx-auto mt-6 max-w-6xl px-6">
