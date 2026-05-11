@@ -426,15 +426,11 @@ export function AuthProvider({ children }) {
         window.location.reload();
         return;
       }
-
-      // If we already reloaded once, keep the user on the page and show login.
-      setAuthModalOpen(true);
     };
 
     const handlePostReload = () => {
       if (window.sessionStorage.getItem(RELOAD_KEY)) {
         window.sessionStorage.removeItem(RELOAD_KEY);
-        setAuthModalOpen(true);
       }
     };
 
