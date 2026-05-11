@@ -1134,7 +1134,7 @@ export default function OwnerDashboard() {
             </div>
           </section>
 
-          <section className="rounded-lg bg-white p-4 shadow-sm">
+          <section className="order-first rounded-lg bg-white p-4 shadow-sm lg:col-span-2">
             <h2 className="text-lg font-bold text-gray-900">Products</h2>
 
             {loading ? (
