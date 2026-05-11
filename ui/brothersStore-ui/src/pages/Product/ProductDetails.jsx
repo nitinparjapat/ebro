@@ -528,7 +528,7 @@ export default function ProductDetails() {
                   aria-hidden="true"
                   className="cod-button__spark cod-button__spark--right"
                 />
-                <span className="cod-button__label">Pay Online</span>
+                <span className="cod-button__label">Buy Now</span>
               </button>
             </div>
 
