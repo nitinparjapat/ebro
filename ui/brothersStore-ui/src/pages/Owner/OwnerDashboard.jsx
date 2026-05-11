@@ -116,6 +116,7 @@ export default function OwnerDashboard() {
     refreshProducts,
     saveProduct,
     toggleProductActive,
+    deleteProduct,
   } = useProducts();
   const {
     ownerOrders,
@@ -502,6 +503,25 @@ export default function OwnerDashboard() {
       setDashboardError("");
     } catch (toggleError) {
       setDashboardError(toggleError.message);
+    }
+  };
+
+  const handleDeleteProduct = async (product) => {
+    const confirmed = window.confirm(`Delete "${product.title}" permanently?`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteProduct(product.id);
+      setDashboardMessage(`${product.title} deleted.`);
+      setDashboardError("");
+
+      if (productForm.id === product.id) {
+        resetForm();
+      }
+    } catch (deleteError) {
+      setDashboardError(deleteError.message);
     }
   };
 
@@ -1203,20 +1223,29 @@ export default function OwnerDashboard() {
                         </div>
                       </div>
 
-                      <div className="mt-3 flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEditProduct(product)}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700"
-                          aria-label={`Edit ${product.title}`}
-                        >
-                          <FiEdit3 />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleActive(product)}
-                          disabled={saving}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700 disabled:opacity-60"
+	                      <div className="mt-3 flex justify-end gap-2">
+	                        <button
+	                          type="button"
+	                          onClick={() => handleEditProduct(product)}
+	                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700"
+	                          aria-label={`Edit ${product.title}`}
+	                        >
+	                          <FiEdit3 />
+	                        </button>
+	                        <button
+	                          type="button"
+	                          onClick={() => handleDeleteProduct(product)}
+	                          disabled={saving}
+	                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-red-600 disabled:opacity-60"
+	                          aria-label={`Delete ${product.title}`}
+	                        >
+	                          <FiTrash2 />
+	                        </button>
+	                        <button
+	                          type="button"
+	                          onClick={() => handleToggleActive(product)}
+	                          disabled={saving}
+	                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700 disabled:opacity-60"
                           aria-label={product.isActive ? `Deactivate ${product.title}` : `Activate ${product.title}`}
                         >
                           {product.isActive ? <FiToggleRight /> : <FiToggleLeft />}
@@ -1324,21 +1353,31 @@ export default function OwnerDashboard() {
                           </span>
                         </td>
                         <td className="py-3 pl-3 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleEditProduct(product)}
-                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400"
-                              aria-label={`Edit ${product.title}`}
-                            >
-                              <FiEdit3 />
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleToggleActive(product)}
-                              disabled={saving}
-                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400 disabled:opacity-60"
+	                          <div className="flex justify-end gap-2">
+	                            <button
+	                              type="button"
+	                              onClick={() => handleEditProduct(product)}
+	                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400"
+	                              aria-label={`Edit ${product.title}`}
+	                            >
+	                              <FiEdit3 />
+	                              Edit
+	                            </button>
+	                            <button
+	                              type="button"
+	                              onClick={() => handleDeleteProduct(product)}
+	                              disabled={saving}
+	                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-red-600 hover:border-gray-400 disabled:opacity-60"
+	                              aria-label={`Delete ${product.title}`}
+	                            >
+	                              <FiTrash2 />
+	                              Delete
+	                            </button>
+	                            <button
+	                              type="button"
+	                              onClick={() => handleToggleActive(product)}
+	                              disabled={saving}
+	                              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:border-gray-400 disabled:opacity-60"
                               aria-label={
                                 product.isActive
                                   ? `Deactivate ${product.title}`

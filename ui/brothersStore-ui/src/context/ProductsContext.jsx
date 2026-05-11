@@ -234,6 +234,40 @@ export function ProductsProvider({ children }) {
     }
   }, [token]);
 
+  const deleteProduct = useCallback(async (productId) => {
+    if (!productId) {
+      throw new Error("Product not found.");
+    }
+
+    setSaving(true);
+
+    try {
+      await apiClient.delete(`/products/${productId}`, {
+        headers: createAuthHeaders(token),
+      });
+
+      setProducts((currentProducts) =>
+        currentProducts.filter((product) => product.id !== productId)
+      );
+      setProductDetails((currentDetails) => {
+        if (!currentDetails[productId]) {
+          return currentDetails;
+        }
+
+        const nextDetails = { ...currentDetails };
+        delete nextDetails[productId];
+        return nextDetails;
+      });
+      setError("");
+    } catch (apiError) {
+      throw new Error(getApiErrorMessage(apiError, "Unable to delete product."), {
+        cause: apiError,
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, [token]);
+
   const productLookup = useMemo(() => {
     const lookup = {};
 
@@ -262,10 +296,12 @@ export function ProductsProvider({ children }) {
       refreshProducts,
       saveProduct,
       toggleProductActive,
+      deleteProduct,
     }),
     [
       categories,
       error,
+      deleteProduct,
       loadProduct,
       loading,
       productLookup,
