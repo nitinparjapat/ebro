@@ -542,9 +542,9 @@ export default function ProductDetails() {
               />
             </button>
           </div>
-        </div>
 
-        <p className="mt-5 text-gray-600">{product.description}</p>
+          <p className="mt-5 text-gray-600">{product.description}</p>
+        </div>
       </div>
 
       <div className="mx-auto mt-6 max-w-6xl px-6">
