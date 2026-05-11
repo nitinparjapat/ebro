@@ -4,6 +4,7 @@ import { FaHeart } from "react-icons/fa";
 import { FiMinus, FiPlus } from "react-icons/fi";
 
 import { useCart } from "../../context/CartContext";
+import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { getDiscountPercent } from "../../lib/storeApi";
 import Rating from "../common/Rating";
@@ -11,6 +12,7 @@ import Rating from "../common/Rating";
 function ProductCard({ product }) {
   const navigate = useNavigate();
   const { cart, addToCart, decreaseQuantity } = useCart();
+  const { loadProduct } = useProducts();
   const { wishlist, toggleWishlist } = useWishlist();
 
   const productId = product?.id;
@@ -21,6 +23,7 @@ function ProductCard({ product }) {
     [productImages]
   );
   const image = images[0];
+  const hasRealImage = Boolean(image) && !String(image).startsWith("data:image/svg+xml");
   const goToDetails = () => {
     if (!productId) {
       return;
@@ -56,6 +59,23 @@ function ProductCard({ product }) {
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
+
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (!isInView || hydratedRef.current || !productId) {
+      return;
+    }
+
+    if (hasRealImage) {
+      hydratedRef.current = true;
+      return;
+    }
+
+    hydratedRef.current = true;
+    loadProduct(productId).catch(() => {
+      // best-effort hydration; keep placeholder on failure
+    });
+  }, [hasRealImage, isInView, loadProduct, productId]);
 
   useEffect(() => {
     if (images.length <= 1 || !isInView || isHovered) {
