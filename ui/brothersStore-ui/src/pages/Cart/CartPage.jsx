@@ -698,9 +698,11 @@ export default function CartPage() {
                       {paymentMode === "prepaid" && <span className="h-2 w-2 rounded-full bg-emerald-700" />}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900">Prepaid (Buy Now)</p>
+                      <p className="text-sm font-bold text-slate-900">Buy Now</p>
                       <p className="mt-0.5 text-xs font-medium text-emerald-700">
-                        Save on prepaid orders
+                        {prepaidDiscountAmount > 0
+                          ? `Prepaid offer applied: save ${formatPrice(prepaidDiscountAmount)}`
+                          : "Pay online with Razorpay"}
                       </p>
                       <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-600">
                         <FiShield className="shrink-0" />
@@ -846,7 +848,11 @@ export default function CartPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <FiTag className="shrink-0 text-slate-500" />
-                    <span>Save on prepaid orders</span>
+                    <span>
+                      {prepaidDiscountAmount > 0
+                        ? `Prepaid offer: save ${formatPrice(prepaidDiscountAmount)} on this order`
+                        : "Prepaid offer will apply if available"}
+                    </span>
                   </div>
                 </div>
               )}
@@ -875,7 +881,7 @@ export default function CartPage() {
                   {placingOrder
                     ? "Placing order..."
                     : paymentMode === "prepaid"
-                      ? "Buy Now (Prepaid)"
+                      ? "Buy Now"
                       : "Proceed with Cash on Delivery"}
                 </span>
               </button>

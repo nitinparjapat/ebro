@@ -432,7 +432,7 @@ export default function ProductDetails() {
             {approvedReviews.length === 1 ? "" : "s"}
           </p>
 
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-2xl font-black text-slate-950">
               Rs. {product.price.toLocaleString("en-IN")}
             </span>
@@ -528,7 +528,7 @@ export default function ProductDetails() {
                   aria-hidden="true"
                   className="cod-button__spark cod-button__spark--right"
                 />
-                <span className="cod-button__label">Buy Now (Prepaid)</span>
+                <span className="cod-button__label">Buy Now</span>
               </button>
             </div>
 
