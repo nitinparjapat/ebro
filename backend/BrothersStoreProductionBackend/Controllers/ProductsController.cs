@@ -255,8 +255,8 @@ public class ProductsController : ControllerBase
         product.Name = request.Name?.Trim() ?? "";
         product.Description = request.Description?.Trim() ?? "";
         var price = request.Price;
-        var originalPrice = request.OriginalPrice > 0
-            ? request.OriginalPrice
+        var originalPrice = request.OriginalPrice.HasValue && request.OriginalPrice.Value > 0
+            ? request.OriginalPrice.Value
             : product.OriginalPrice > 0
                 ? product.OriginalPrice
                 : price;
@@ -308,7 +308,7 @@ public class ProductUpsertRequest
 {
     public string Name { get; set; } = "";
     public string Description { get; set; } = "";
-    public decimal OriginalPrice { get; set; }
+    public decimal? OriginalPrice { get; set; }
     public decimal Price { get; set; }
     public int Stock { get; set; }
     public string CategoryName { get; set; } = "";
