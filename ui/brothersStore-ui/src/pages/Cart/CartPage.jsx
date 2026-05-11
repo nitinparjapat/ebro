@@ -821,7 +821,7 @@ export default function CartPage() {
                       {paymentMode === "prepaid" && <span className="h-2 w-2 rounded-full bg-emerald-700" />}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900">Buy Now</p>
+                      <p className="text-sm font-bold text-slate-900">Pay Online</p>
                       <p className="mt-0.5 text-xs font-medium text-emerald-700">
                         {prepaidOfferCopy}
                       </p>
@@ -998,7 +998,7 @@ export default function CartPage() {
                   {placingOrder
                     ? "Placing order..."
                     : paymentMode === "prepaid"
-                      ? "Buy Now"
+                      ? "Pay Online"
                       : "Proceed with Cash on Delivery"}
                 </span>
               </button>
