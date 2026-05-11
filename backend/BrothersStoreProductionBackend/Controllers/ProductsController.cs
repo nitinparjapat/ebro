@@ -199,6 +199,7 @@ public class ProductsController : ControllerBase
             Id = product.Id,
             Name = product.Name,
             Description = product.Description,
+            OriginalPrice = product.OriginalPrice,
             Price = product.Price,
             Stock = product.Stock,
             CategoryName = product.CategoryName,
