@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FiCheck,
   FiChevronDown,
@@ -24,6 +24,7 @@ import { useProducts } from "../../context/ProductsContext";
 import {
   createRazorpayOrder,
   getCartPricingPreview,
+  getPrepaidOfferPreview,
   loadRazorpayCheckout,
   openRazorpayCheckout,
   verifyRazorpayPayment,
@@ -91,6 +92,12 @@ export default function CartPage() {
     .sort()
     .join("|");
 
+  const [prepaidOfferPreview, setPrepaidOfferPreview] = useState({
+    totalDiscountAmount: 0,
+    totalQuantity: 0,
+    perItemDiscounts: [],
+  });
+
   useEffect(() => {
     const payMode = searchParams.get("pay");
     if (payMode === "prepaid") {
@@ -133,8 +140,100 @@ export default function CartPage() {
     };
   }, [cart.length, cartPricingKey, isAuthenticated, token]);
 
-  const pricingPreview = paymentMode === "prepaid" ? prepaidPricingPreview : codPricingPreview;
-  const prepaidOfferAmount = Number(prepaidPricingPreview?.prepaidDiscountAmount ?? 0);
+  useEffect(() => {
+    if (cart.length === 0) {
+      setPrepaidOfferPreview({
+        totalDiscountAmount: 0,
+        totalQuantity: 0,
+        perItemDiscounts: [],
+      });
+      return;
+    }
+
+    let ignore = false;
+
+    Promise.allSettled(
+      cart.map((item) =>
+        getPrepaidOfferPreview({
+          productId: item.id,
+          quantity: Math.max(1, Number(item.quantity ?? 1)),
+        }).then((data) => ({
+          productId: item.id,
+          quantity: Math.max(1, Number(item.quantity ?? 1)),
+          discountPerItem: Number(data?.discountPerItem ?? 0),
+          discountAmount: Number(data?.discountAmount ?? 0),
+        }))
+      )
+    ).then((results) => {
+      if (ignore) {
+        return;
+      }
+
+      const resolved = results
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value);
+
+      const totalDiscountAmount = resolved.reduce(
+        (sum, item) => sum + (Number.isFinite(item.discountAmount) ? item.discountAmount : 0),
+        0
+      );
+      const totalQuantity = resolved.reduce(
+        (sum, item) => sum + (Number.isFinite(item.quantity) ? item.quantity : 0),
+        0
+      );
+      const perItemDiscounts = Array.from(
+        new Set(
+          resolved
+            .map((item) => item.discountPerItem)
+            .filter((value) => Number.isFinite(value) && value > 0)
+        )
+      ).sort((a, b) => a - b);
+
+      setPrepaidOfferPreview({
+        totalDiscountAmount,
+        totalQuantity,
+        perItemDiscounts,
+      });
+    });
+
+    return () => {
+      ignore = true;
+    };
+  }, [cartPricingKey]);
+
+  const pricingPreview = useMemo(() => {
+    const selectedPreview =
+      paymentMode === "prepaid" ? prepaidPricingPreview : codPricingPreview;
+
+    if (selectedPreview) {
+      return selectedPreview;
+    }
+
+    if (!isAuthenticated) {
+      const prepaidDiscountAmount =
+        paymentMode === "prepaid" ? prepaidOfferPreview.totalDiscountAmount : 0;
+
+      return {
+        originalTotalAmount: cartTotal,
+        firstOrderDiscountAmount: 0,
+        prepaidDiscountAmount,
+        finalTotalAmount: Math.max(0, Number(cartTotal) - prepaidDiscountAmount),
+      };
+    }
+
+    return null;
+  }, [
+    cartTotal,
+    codPricingPreview,
+    isAuthenticated,
+    paymentMode,
+    prepaidOfferPreview.totalDiscountAmount,
+    prepaidPricingPreview,
+  ]);
+
+  const prepaidOfferAmount = Number(
+    prepaidPricingPreview?.prepaidDiscountAmount ?? prepaidOfferPreview.totalDiscountAmount ?? 0
+  );
 
   const originalTotalAmount = Number(pricingPreview?.originalTotalAmount ?? cartTotal);
   const firstOrderDiscountAmount = Number(pricingPreview?.firstOrderDiscountAmount ?? 0);
@@ -144,6 +243,22 @@ export default function CartPage() {
       Math.max(0, originalTotalAmount - firstOrderDiscountAmount - prepaidDiscountAmount)
   );
   const hasAnyOffer = firstOrderDiscountAmount > 0 || prepaidDiscountAmount > 0;
+
+  const prepaidOfferCopy = useMemo(() => {
+    const perItemDiscounts = prepaidOfferPreview.perItemDiscounts;
+    if (!Number.isFinite(prepaidOfferAmount) || prepaidOfferAmount <= 0) {
+      return "Prepaid offer will apply if available";
+    }
+
+    if (perItemDiscounts.length === 1) {
+      const perItem = perItemDiscounts[0];
+      if (Number.isFinite(perItem) && perItem > 0) {
+        return `Prepaid offer: save ${formatPrice(prepaidOfferAmount)} (${formatPrice(perItem)} off / item)`;
+      }
+    }
+
+    return `Prepaid offer: save ${formatPrice(prepaidOfferAmount)}`;
+  }, [prepaidOfferAmount, prepaidOfferPreview.perItemDiscounts]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -708,9 +823,7 @@ export default function CartPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-slate-900">Buy Now</p>
                       <p className="mt-0.5 text-xs font-medium text-emerald-700">
-                        {prepaidOfferAmount > 0
-                          ? `Prepaid offer: save ${formatPrice(prepaidOfferAmount)}`
-                          : "Pay online with Razorpay"}
+                        {prepaidOfferCopy}
                       </p>
                       <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-600">
                         <FiShield className="shrink-0" />
@@ -856,11 +969,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <FiTag className="shrink-0 text-slate-500" />
-                    <span>
-                      {prepaidOfferAmount > 0
-                        ? `Prepaid offer: save ${formatPrice(prepaidOfferAmount)} on this order`
-                        : "Prepaid offer will apply if available"}
-                    </span>
+                    <span>{prepaidOfferCopy}</span>
                   </div>
                 </div>
               )}
