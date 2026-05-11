@@ -125,6 +125,8 @@ public class ProductsController : ControllerBase
             return NotFound();
         }
 
+        var wasActive = product.IsActive;
+
         if (request.IsActive.HasValue)
         {
             product.IsActive = request.IsActive.Value;
@@ -136,7 +138,44 @@ public class ProductsController : ControllerBase
         }
 
         await db.SaveChangesAsync();
+
+        if (wasActive && !product.IsActive)
+        {
+            await RemoveProductFromCartsAndWishlistsAsync(product.Id);
+        }
+
         return Ok(ToResponse(product, includeVideos: true));
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    [EnableRateLimiting("write")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var product = await db.Products.FindAsync(id);
+
+        if (product == null)
+        {
+            return NotFound();
+        }
+
+        await RemoveProductFromCartsAndWishlistsAsync(product.Id);
+
+        db.Products.Remove(product);
+        await db.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    private async Task RemoveProductFromCartsAndWishlistsAsync(int productId)
+    {
+        await db.CartItems
+            .Where(item => item.ProductId == productId)
+            .ExecuteDeleteAsync();
+
+        await db.Wishlist
+            .Where(item => item.ProductId == productId)
+            .ExecuteDeleteAsync();
     }
 
     private static ProductResponse ToResponse(Product product, bool includeVideos)

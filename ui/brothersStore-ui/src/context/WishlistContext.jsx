@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { useAuth } from "./AuthContext";
+import { apiClient } from "../lib/api";
+import { normalizeProduct } from "../lib/storeApi";
 
 const WishlistContext = createContext();
 const GUEST_WISHLIST_STORAGE_KEY = "brothersStoreGuestWishlist";
@@ -61,10 +63,39 @@ export function WishlistProvider({ children }) {
   const userId = currentUser?.id || currentUser?.email || "";
   const [wishlist, setWishlist] = useState(() => readWishlist(""));
 
+  const pruneWishlist = async (storageUserId, items) => {
+    if (items.length === 0) {
+      return items;
+    }
+
+    const checks = await Promise.allSettled(
+      items.map((item) => apiClient.get(`/products/${item.id}`))
+    );
+
+    const nextWishlist = checks.flatMap((result) => {
+      if (result.status !== "fulfilled") {
+        return [];
+      }
+
+      const product = normalizeProduct(result.value?.data);
+      return product?.isActive ? [product] : [];
+    });
+
+    if (nextWishlist.length !== items.length) {
+      setWishlist(nextWishlist);
+      saveWishlist(storageUserId, nextWishlist);
+    }
+
+    return nextWishlist;
+  };
+
   useEffect(() => {
     queueMicrotask(() => {
       if (!userId) {
-        setWishlist(readWishlist(""));
+        const nextWishlist = readWishlist("");
+        setWishlist(nextWishlist);
+        pruneWishlist("", nextWishlist).catch(() => {
+        });
         return;
       }
 
@@ -75,6 +106,8 @@ export function WishlistProvider({ children }) {
       setWishlist(mergedWishlist);
       saveWishlist(userId, mergedWishlist);
       clearGuestWishlist();
+      pruneWishlist(userId, mergedWishlist).catch(() => {
+      });
     });
   }, [userId]);
 

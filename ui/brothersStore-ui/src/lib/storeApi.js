@@ -1,7 +1,22 @@
 import axios from "axios";
 
 const DEFAULT_PRODUCT_IMAGE =
-  "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=1200&q=80";
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#f8fafc"/>
+          <stop offset="1" stop-color="#eef2f7"/>
+        </linearGradient>
+      </defs>
+      <rect width="900" height="600" fill="url(#bg)"/>
+      <rect x="160" y="120" width="580" height="360" rx="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="8"/>
+      <path d="M260 410l120-140 90 105 70-80 120 115H260z" fill="#e2e8f0"/>
+      <circle cx="360" cy="250" r="34" fill="#e2e8f0"/>
+      <text x="450" y="515" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="36" fill="#64748b">No image</text>
+    </svg>`
+  );
 
 const toNumber = (value) => Number(value ?? 0);
 

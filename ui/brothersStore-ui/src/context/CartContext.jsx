@@ -54,6 +54,29 @@ const clearGuestCart = () => {
   window.localStorage.removeItem(GUEST_CART_STORAGE_KEY);
 };
 
+const pruneGuestCart = async (items) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return [];
+  }
+
+  const checks = await Promise.allSettled(
+    items.map((item) => apiClient.get(`/products/${item.id}`))
+  );
+
+  return checks.flatMap((result, index) => {
+    if (result.status !== "fulfilled") {
+      return [];
+    }
+
+    const product = result.value?.data;
+    if (!product?.isActive) {
+      return [];
+    }
+
+    return [items[index]];
+  });
+};
+
 const toCartItem = (productOrId, quantity, currentCart, fallbackProduct = null) => {
   if (typeof productOrId === "number") {
     const existingItem = currentCart.find((item) => item.id === productOrId);
@@ -133,8 +156,19 @@ export function CartProvider({ children }) {
   useEffect(() => {
     if (!token) {
       queueMicrotask(() => {
-        setCart(getStoredCart());
+        const guestCart = getStoredCart();
+        setCart(guestCart);
         setError("");
+        pruneGuestCart(guestCart)
+          .then((prunedCart) => {
+            if (prunedCart.length === guestCart.length) {
+              return;
+            }
+            setCart(prunedCart);
+            saveGuestCart(prunedCart);
+          })
+          .catch(() => {
+          });
       });
       return;
     }

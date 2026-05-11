@@ -55,7 +55,7 @@ public class CartController : ControllerBase
 
         var productExists = await db.Products
             .AsNoTracking()
-            .AnyAsync(product => product.Id == request.ProductId);
+            .AnyAsync(product => product.Id == request.ProductId && product.IsActive);
 
         if (!productExists)
         {
@@ -174,6 +174,7 @@ public class CartController : ControllerBase
             from cartItem in db.CartItems.AsNoTracking()
             join product in db.Products.AsNoTracking() on cartItem.ProductId equals product.Id
             where cartItem.UserId == userId
+                && product.IsActive
             orderby cartItem.Id descending
             select new
             {
