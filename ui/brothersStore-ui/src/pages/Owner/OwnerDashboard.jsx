@@ -308,24 +308,32 @@ export default function OwnerDashboard() {
       };
     }
 
-    for (const order of ownerOrders) {
-      for (const item of order.items) {
-        if (!statsByProductId[item.id]) {
-          statsByProductId[item.id] = {
-            product: {
-              id: item.id,
-              title: item.title,
-              images: [],
-              category: "Uncategorized",
-              stock: 0,
-              isActive: true,
-            },
-            orderCount: 0,
-            quantity: 0,
-            revenue: 0,
-            customers: [],
-          };
-        }
+	    for (const order of ownerOrders) {
+	      for (const item of order.items) {
+	        if (!statsByProductId[item.id]) {
+	          const fallbackPrice = Number(item.price ?? 0);
+	          statsByProductId[item.id] = {
+	            product: {
+	              id: item.id,
+	              title: item.title,
+	              description: "",
+	              images: [],
+	              category: "Uncategorized",
+	              stock: 0,
+	              price: fallbackPrice,
+	              oldPrice: fallbackPrice,
+	              originalPrice: fallbackPrice,
+	              discountPercent: 0,
+	              videos: [],
+	              hasVideo: false,
+	              isActive: false,
+	            },
+	            orderCount: 0,
+	            quantity: 0,
+	            revenue: 0,
+	            customers: [],
+	          };
+	        }
 
         statsByProductId[item.id].orderCount += 1;
         statsByProductId[item.id].quantity += item.quantity;
