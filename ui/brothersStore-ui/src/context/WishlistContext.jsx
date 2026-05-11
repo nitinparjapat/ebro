@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { useAuth } from "./AuthContext";
-import { apiClient } from "../lib/api";
+import { apiClient, createAuthHeaders } from "../lib/api";
 import { normalizeProduct } from "../lib/storeApi";
 
 const WishlistContext = createContext();
@@ -59,7 +59,7 @@ const mergeWishlists = (primaryList, secondaryList) => {
 };
 
 export function WishlistProvider({ children }) {
-  const { currentUser } = useAuth();
+  const { currentUser, token, logout } = useAuth();
   const userId = currentUser?.id || currentUser?.email || "";
   const [wishlist, setWishlist] = useState(() => readWishlist(""));
 
@@ -89,6 +89,20 @@ export function WishlistProvider({ children }) {
     return nextWishlist;
   };
 
+  const refreshServerWishlist = async () => {
+    if (!token) {
+      return [];
+    }
+
+    const { data } = await apiClient.get("/wishlist", {
+      headers: createAuthHeaders(token),
+    });
+
+    const normalized = Array.isArray(data) ? data.map(normalizeProduct) : [];
+    setWishlist(normalized);
+    return normalized;
+  };
+
   useEffect(() => {
     queueMicrotask(() => {
       if (!userId) {
@@ -99,19 +113,71 @@ export function WishlistProvider({ children }) {
         return;
       }
 
-      const guestWishlist = readWishlist("");
-      const userWishlist = readWishlist(userId);
-      const mergedWishlist = mergeWishlists(userWishlist, guestWishlist);
+      if (!token) {
+        const guestWishlist = readWishlist("");
+        const userWishlist = readWishlist(userId);
+        const mergedWishlist = mergeWishlists(userWishlist, guestWishlist);
 
-      setWishlist(mergedWishlist);
-      saveWishlist(userId, mergedWishlist);
-      clearGuestWishlist();
-      pruneWishlist(userId, mergedWishlist).catch(() => {
-      });
+        setWishlist(mergedWishlist);
+        saveWishlist(userId, mergedWishlist);
+        clearGuestWishlist();
+        pruneWishlist(userId, mergedWishlist).catch(() => {
+        });
+        return;
+      }
+
+      // Logged in: wishlist is account-based. Sync any guest wishlist items once.
+      const guestWishlist = readWishlist("");
+
+      refreshServerWishlist()
+        .then((serverWishlist) => {
+          if (guestWishlist.length === 0) {
+            return serverWishlist;
+          }
+
+          const serverIds = new Set(serverWishlist.map((item) => item.id));
+          const missing = guestWishlist.filter((item) => !serverIds.has(item.id));
+
+          return Promise.allSettled(
+            missing.map((item) =>
+              apiClient.post(
+                "/wishlist/items/toggle",
+                { productId: item.id },
+                { headers: createAuthHeaders(token) }
+              )
+            )
+          ).then(() => refreshServerWishlist());
+        })
+        .then(() => {
+          clearGuestWishlist();
+          saveWishlist(userId, []);
+        })
+        .catch((apiError) => {
+          if (apiError?.response?.status === 401) {
+            logout();
+            return;
+          }
+        });
     });
-  }, [userId]);
+  }, [logout, token, userId]);
 
   const toggleWishlist = (product) => {
+    if (token) {
+      apiClient
+        .post(
+          "/wishlist/items/toggle",
+          { productId: product.id },
+          { headers: createAuthHeaders(token) }
+        )
+        .then(() => refreshServerWishlist())
+        .catch((apiError) => {
+          if (apiError?.response?.status === 401) {
+            logout();
+          }
+        });
+      return;
+    }
+
     const storageUserId = userId || "";
     const exists = wishlist.find((item) => item.id === product.id);
     const nextWishlist = exists
@@ -124,7 +190,20 @@ export function WishlistProvider({ children }) {
 
   const clearWishlist = () => {
     setWishlist([]);
-    saveWishlist(userId || "", []);
+
+    if (!token) {
+      saveWishlist(userId || "", []);
+      return;
+    }
+
+    // Best-effort clear: remove items individually.
+    Promise.allSettled(
+      wishlist.map((item) =>
+        apiClient.delete(`/wishlist/items/${item.id}`, {
+          headers: createAuthHeaders(token),
+        })
+      )
+    ).finally(() => refreshServerWishlist().catch(() => {}));
   };
 
   return (
