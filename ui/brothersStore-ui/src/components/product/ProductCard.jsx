@@ -9,6 +9,28 @@ import { useWishlist } from "../../context/WishlistContext";
 import { getDiscountPercent } from "../../lib/storeApi";
 import Rating from "../common/Rating";
 
+const LOADING_PRODUCT_IMAGE =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#f8fafc"/>
+          <stop offset="1" stop-color="#eef2f7"/>
+        </linearGradient>
+        <linearGradient id="shimmer" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#e2e8f0"/>
+          <stop offset="50%" stop-color="#f1f5f9"/>
+          <stop offset="100%" stop-color="#e2e8f0"/>
+        </linearGradient>
+      </defs>
+      <rect width="900" height="600" fill="url(#bg)"/>
+      <rect x="160" y="120" width="580" height="360" rx="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="8"/>
+      <rect x="220" y="170" width="460" height="260" rx="18" fill="url(#shimmer)"/>
+      <text x="450" y="515" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="36" fill="#64748b">Loading...</text>
+    </svg>`
+  );
+
 function ProductCard({ product }) {
   const navigate = useNavigate();
   const { cart, addToCart, decreaseQuantity } = useCart();
@@ -34,6 +56,7 @@ function ProductCard({ product }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isInView, setIsInView] = useState(false);
+  const [isImageHydrating, setIsImageHydrating] = useState(false);
   const cardRef = useRef(null);
 
   useEffect(() => {
@@ -68,14 +91,26 @@ function ProductCard({ product }) {
 
     if (hasRealImage) {
       hydratedRef.current = true;
+      setIsImageHydrating(false);
       return;
     }
 
     hydratedRef.current = true;
-    loadProduct(productId).catch(() => {
-      // best-effort hydration; keep placeholder on failure
-    });
+    setIsImageHydrating(true);
+    loadProduct(productId)
+      .catch(() => {
+        // best-effort hydration; keep placeholder on failure
+      })
+      .finally(() => {
+        setIsImageHydrating(false);
+      });
   }, [hasRealImage, isInView, loadProduct, productId]);
+
+  useEffect(() => {
+    if (hasRealImage) {
+      setIsImageHydrating(false);
+    }
+  }, [hasRealImage]);
 
   useEffect(() => {
     if (images.length <= 1 || !isInView || isHovered) {
@@ -156,7 +191,7 @@ function ProductCard({ product }) {
 
       <div className="relative overflow-hidden">
         <img
-          src={images[activeImageIndex] || image}
+          src={isImageHydrating && !hasRealImage ? LOADING_PRODUCT_IMAGE : images[activeImageIndex] || image}
           alt={product.title}
           onClick={goToDetails}
           loading="lazy"
