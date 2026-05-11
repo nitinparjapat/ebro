@@ -121,6 +121,8 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = "Shipping address is required." });
         }
 
+        await using var transaction = await db.Database.BeginTransactionAsync();
+
         var hasPreviousOrders = await db.Orders
             .AsNoTracking()
             .AnyAsync(order => order.CustomerEmail == userEmail);
@@ -162,6 +164,13 @@ public class OrdersController : ControllerBase
             }).ToList(),
         };
 
+        var stockReservationError = await ReserveStockAsync(cartItems);
+        if (!string.IsNullOrWhiteSpace(stockReservationError))
+        {
+            await transaction.RollbackAsync();
+            return BadRequest(new { message = stockReservationError });
+        }
+
         db.Orders.Add(order);
 
         var userCartItems = await db.CartItems.Where(item => item.UserId == userId).ToListAsync();
@@ -171,6 +180,7 @@ public class OrdersController : ControllerBase
         }
 
         await db.SaveChangesAsync();
+        await transaction.CommitAsync();
         _ = orderEmailNotificationService.SendOrderPlacedNotificationsAsync(order);
 
         return Ok(new
@@ -215,7 +225,20 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = "Status is required." });
         }
 
-        order.Status = request.Status.Trim();
+        var previousStatus = order.Status;
+        var nextStatus = request.Status.Trim();
+        order.Status = nextStatus;
+
+        if (!IsCancelledStatus(previousStatus) && IsCancelledStatus(nextStatus))
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync();
+            await RestoreStockAsync(order);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(order);
+        }
+
         if (string.Equals(order.Status, "Confirmed", StringComparison.OrdinalIgnoreCase))
         {
             order.ConfirmedByAdminName = User.FindFirst(ClaimTypes.Name)?.Value?.Trim() ?? "";
@@ -233,8 +256,91 @@ public class OrdersController : ControllerBase
         return Ok(order);
     }
 
+    [HttpPost("{id:int}/cancel")]
+    [EnableRateLimiting("write")]
+    public async Task<IActionResult> Cancel(int id)
+    {
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value?.Trim();
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            return Unauthorized();
+        }
+
+        var isAdmin = IsAdmin();
+
+        var order = await db.Orders.Include(item => item.Items).FirstOrDefaultAsync(item => item.Id == id);
+        if (order == null)
+        {
+            return NotFound();
+        }
+
+        if (!isAdmin && !string.Equals(order.CustomerEmail, userEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
+        if (IsCancelledStatus(order.Status))
+        {
+            return Ok(order);
+        }
+
+        if (string.Equals(order.Status, "Confirmed", StringComparison.OrdinalIgnoreCase)
+            || order.Status.Contains("ship", StringComparison.OrdinalIgnoreCase)
+            || order.Status.Contains("deliver", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = "This order cannot be cancelled now." });
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        order.Status = "Cancelled";
+        await RestoreStockAsync(order);
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        return Ok(order);
+    }
+
     private bool IsAdmin() =>
         string.Equals(User.FindFirst(ClaimTypes.Role)?.Value, "Admin", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsCancelledStatus(string status) =>
+        status.Trim().Contains("cancel", StringComparison.OrdinalIgnoreCase);
+
+    private async Task<string?> ReserveStockAsync(IReadOnlyCollection<CartPricingItem> cartItems)
+    {
+        foreach (var item in cartItems)
+        {
+            var rowsAffected = await db.Products
+                .Where(product =>
+                    product.Id == item.ProductId
+                    && product.IsActive
+                    && product.Stock >= item.Quantity
+                )
+                .ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(product => product.Stock, product => product.Stock - item.Quantity)
+                );
+
+            if (rowsAffected == 0)
+            {
+                var productName = string.IsNullOrWhiteSpace(item.ProductName) ? "Product" : item.ProductName;
+                return $"{productName} is out of stock for quantity {item.Quantity}.";
+            }
+        }
+
+        return null;
+    }
+
+    private async Task RestoreStockAsync(Order order)
+    {
+        foreach (var item in order.Items)
+        {
+            await db.Products
+                .Where(product => product.Id == item.ProductId)
+                .ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(product => product.Stock, product => product.Stock + item.Quantity)
+                );
+        }
+    }
 
     private async Task<decimal> ComputePrepaidDiscountAsync(
         IReadOnlyCollection<CartPricingItem> cartItems,
