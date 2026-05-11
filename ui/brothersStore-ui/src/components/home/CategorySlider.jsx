@@ -8,8 +8,10 @@ export default function CategorySlider({
       <div className="mx-auto max-w-7xl">
         <div className="mb-2 flex items-end justify-between gap-3 md:mb-3">
           <div>
-            <p className="genz-kicker">Browse The Vibe</p>
-            <h2 className="mt-1 text-xl font-black tracking-[-0.03em] text-slate-950 md:text-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+              Categories
+            </p>
+            <h2 className="mt-1 text-xl font-bold text-gray-900 md:text-2xl">
               Pick a corner of home life
             </h2>
           </div>
@@ -24,10 +26,10 @@ export default function CategorySlider({
                 key={category.id}
                 type="button"
                 onClick={() => onSelectCategory(category.name)}
-                className={`group genz-paper min-w-[146px] snap-start rounded-[1.35rem] border p-2.5 text-left transition md:min-w-[198px] md:rounded-[1.6rem] md:p-3 ${
+                className={`group min-w-[146px] snap-start rounded-[1.35rem] border p-2.5 text-left shadow-sm transition md:min-w-[198px] md:rounded-[1.6rem] md:p-3 ${
                   isSelected
-                    ? "rotate-[-1deg] border-slate-900 bg-slate-900 text-white shadow-[0_14px_26px_rgba(15,23,42,0.16)]"
-                    : "paper-panel rotate-[0.4deg] text-slate-900 hover:-translate-y-1 hover:rotate-[-0.4deg]"
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 bg-white text-slate-900 hover:-translate-y-1 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center gap-3">

@@ -41,10 +41,10 @@ function App() {
   }, []);
 
   return (
-    <div className="paper-bg min-h-screen text-slate-900">
+    <>
       <AppRoutes />
       <AuthModal />
-    </div>
+    </>
   );
 }
 

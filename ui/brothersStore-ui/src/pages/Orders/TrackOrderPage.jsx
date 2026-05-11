@@ -99,26 +99,21 @@ export default function TrackOrderPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gray-100">
         <Navbar />
         <main className="mx-auto max-w-5xl px-4 py-10">
-          <div className="paper-stack">
-            <div className="genz-paper paper-panel rounded-[2rem] p-6 text-center shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
-            <p className="genz-kicker">Tracking</p>
-            <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-slate-950 md:text-3xl">
-              Track Order
-            </h1>
-            <p className="mt-3 font-semibold text-slate-700">
+          <div className="rounded-lg bg-white p-6 text-center shadow-sm">
+            <h1 className="text-2xl font-bold text-gray-900">Track Order</h1>
+            <p className="mt-3 text-gray-600">
               Sign in with Google to track your order.
             </p>
             <button
               type="button"
               onClick={openAuthModal}
-              className="mt-5 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white shadow-[0_14px_26px_rgba(15,23,42,0.16)]"
+              className="mt-5 rounded-lg bg-black px-5 py-3 font-semibold text-white"
             >
               Sign In
             </button>
-            </div>
           </div>
         </main>
       </div>
@@ -127,23 +122,21 @@ export default function TrackOrderPage() {
 
   if (loading || !order) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gray-100">
         <Navbar />
         <main className="mx-auto max-w-5xl px-4 py-10">
-          <div className="paper-stack">
-            <div className="genz-paper paper-panel rounded-[2rem] p-6 text-center shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+          <div className="rounded-lg bg-white p-6 text-center shadow-sm">
             <FiClock className="mx-auto text-3xl text-slate-500" />
-            <h1 className="mt-3 text-2xl font-black tracking-[-0.04em] text-slate-950">
+            <h1 className="mt-3 text-2xl font-bold text-gray-900">
               {loading ? "Loading order" : "Order not found"}
             </h1>
             <button
               type="button"
               onClick={() => navigate("/orders")}
-              className="mt-5 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white shadow-[0_14px_26px_rgba(15,23,42,0.16)]"
+              className="mt-5 rounded-lg bg-black px-5 py-3 font-semibold text-white"
             >
               View Orders
             </button>
-            </div>
           </div>
         </main>
       </div>
@@ -151,26 +144,23 @@ export default function TrackOrderPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-100">
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-4 py-6">
-        <header className="paper-stack">
-          <div className="genz-paper paper-panel rounded-[2rem] p-5 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
-          <p className="genz-kicker">Track Order</p>
+        <header className="rounded-lg bg-white p-5 shadow-sm">
           <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="text-2xl font-black tracking-[-0.04em] text-slate-950">
+              <h1 className="text-2xl font-bold text-gray-900">
                 {order.code}
               </h1>
-              <p className="mt-1 text-sm font-semibold text-slate-700">
+              <p className="mt-1 text-sm text-gray-500">
                 Placed on {formatDate(order.createdAt)}
               </p>
             </div>
-            <div className="rounded-[1.4rem] bg-green-50/90 px-4 py-3 text-sm font-bold text-green-800 shadow-sm">
+            <div className="rounded-lg bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
               Estimated delivery {formatDate(order.estimatedDelivery)}
             </div>
-          </div>
           </div>
         </header>
 
@@ -180,9 +170,8 @@ export default function TrackOrderPage() {
           </div>
         )}
 
-        <section className="mt-5 paper-stack">
-          <div className="genz-paper paper-panel rounded-[2rem] p-5 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
-          <h2 className="text-lg font-black text-slate-950">Delivery timeline</h2>
+        <section className="mt-5 rounded-lg bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-900">Delivery timeline</h2>
 
           <div className="mt-5 grid gap-0">
             {statusSteps.map((step, index) => {
@@ -197,7 +186,7 @@ export default function TrackOrderPage() {
                       className={`flex h-10 w-10 items-center justify-center rounded-full ${
                         isDone
                           ? "bg-green-600 text-white"
-                          : "bg-white/80 text-slate-500 shadow-sm"
+                          : "bg-gray-100 text-gray-400"
                       }`}
                     >
                       <Icon />
@@ -205,7 +194,7 @@ export default function TrackOrderPage() {
                     {index < statusSteps.length - 1 && (
                       <div
                         className={`h-12 w-0.5 ${
-                          index < currentStepIndex ? "bg-green-600" : "bg-slate-900/15"
+                          index < currentStepIndex ? "bg-green-600" : "bg-gray-200"
                         }`}
                       />
                     )}
@@ -214,19 +203,18 @@ export default function TrackOrderPage() {
                   <div className="pb-6">
                     <p
                       className={`font-bold ${
-                        isDone ? "text-slate-950" : "text-slate-400"
+                        isDone ? "text-gray-900" : "text-gray-400"
                       }`}
                     >
                       {step.title}
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-700">
+                    <p className="mt-1 text-sm text-gray-500">
                       {isCurrent ? order.status : step.description}
                     </p>
                   </div>
                 </div>
               );
             })}
-          </div>
           </div>
         </section>
 

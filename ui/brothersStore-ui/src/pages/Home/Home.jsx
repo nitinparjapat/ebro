@@ -44,7 +44,7 @@ export default function Home() {
   }, [deferredSearchTerm, products, selectedCategory]);
 
   return (
-    <div className="paper-bg min-h-screen">
+    <div className="min-h-screen bg-gray-100">
       <Navbar />
       <HeroBanner />
 
@@ -58,19 +58,21 @@ export default function Home() {
 
       <div className="mx-auto max-w-7xl px-4 pb-8 pt-1 md:px-6 md:pb-10 md:pt-2">
         <div className="mb-4 flex flex-col gap-3 md:mb-5 md:flex-row md:items-end md:justify-between md:gap-4">
-          <div className="genz-tape genz-paper paper-panel rounded-[1.5rem] px-4 py-4 md:min-w-[420px] md:rounded-[1.8rem] md:px-5 md:py-5">
-            <p className="genz-kicker">Latest Shelf Edit</p>
-            <h2 className="mt-1.5 text-2xl font-black tracking-[-0.04em] text-slate-950 md:mt-2 md:text-3xl">
+          <div className="rounded-2xl bg-white px-4 py-4 shadow-sm md:min-w-[420px] md:px-5 md:py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+              Latest Shelf Edit
+            </p>
+            <h2 className="mt-1.5 text-2xl font-bold text-gray-900 md:mt-2 md:text-3xl">
               {selectedCategory === "All"
                 ? "Trending Home Finds"
                 : `${selectedCategory} Finds`}
             </h2>
-            <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-700 md:mt-2 md:leading-6">
+            <p className="mt-1.5 max-w-2xl text-sm leading-5 text-gray-600 md:mt-2 md:leading-6">
               Decor touches and useful home pieces that make everyday spaces feel more styled, more lived in, and less plain.
             </p>
           </div>
 
-          <div className="self-start rounded-[1.1rem] bg-slate-950 px-3.5 py-2.5 text-white shadow-[0_12px_22px_rgba(15,23,42,0.14)] md:self-auto md:rounded-[1.4rem] md:px-4 md:py-3">
+          <div className="self-start rounded-2xl bg-black px-3.5 py-2.5 text-white shadow-sm md:self-auto md:px-4 md:py-3">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/65">
               Now Showing
             </p>
@@ -93,10 +95,8 @@ export default function Home() {
             {error}
           </p>
         ) : (
-          <div className="paper-stack">
-            <div className="genz-paper paper-panel rounded-[2rem] p-4 md:p-6">
-              <ProductGrid products={filteredProducts} />
-            </div>
+          <div className="rounded-2xl bg-white p-4 shadow-sm md:p-6">
+            <ProductGrid products={filteredProducts} />
           </div>
         )}
       </div>

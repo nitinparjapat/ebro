@@ -29,27 +29,25 @@ export default function OrdersPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gray-100">
         <Navbar />
 
         <main className="mx-auto max-w-5xl px-4 py-10">
-          <div className="paper-stack">
-            <div className="genz-paper paper-panel rounded-[2rem] p-6 text-center shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
-            <p className="genz-kicker">Order History</p>
-            <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-slate-950 md:text-3xl">
-              My Orders
-            </h1>
-            <p className="mt-3 font-semibold text-slate-700">
+          <div className="rounded-lg bg-white p-6 text-center shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+              Order History
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-gray-900 md:text-3xl">My Orders</h1>
+            <p className="mt-3 text-gray-600">
               Sign in to track current orders and view your order history.
             </p>
             <button
               type="button"
               onClick={openAuthModal}
-              className="mt-5 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white shadow-[0_14px_26px_rgba(15,23,42,0.16)]"
+              className="mt-5 rounded-lg bg-black px-5 py-3 font-semibold text-white"
             >
               Sign In to Continue
             </button>
-            </div>
           </div>
         </main>
       </div>
@@ -57,22 +55,16 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-100">
       <Navbar />
 
       <main className="mx-auto max-w-5xl px-4 py-5">
         <header className="mb-5">
-          <div className="paper-stack">
-            <div className="genz-paper paper-panel rounded-[2rem] px-5 py-5 md:px-6">
-              <p className="genz-kicker">Order History</p>
-              <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-slate-950 md:text-3xl">
-                My Orders
-              </h1>
-
-              <p className="mt-2 text-sm font-semibold text-slate-700">
-                Track all your previous COD purchases in one place.
-              </p>
-            </div>
+          <div className="rounded-lg bg-white p-5 shadow-sm md:p-6">
+            <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Track all your previous COD purchases in one place.
+            </p>
           </div>
         </header>
 
@@ -89,48 +81,44 @@ export default function OrdersPage() {
         )}
 
         {loading ? (
-          <div className="paper-stack">
-            <div className="genz-paper paper-panel rounded-[2rem] p-6 text-center shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
-              <p className="font-semibold text-slate-700">Loading your orders...</p>
-            </div>
+          <div className="rounded-lg bg-white p-6 text-center shadow-sm">
+            <p className="text-gray-600">Loading your orders...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="paper-stack">
-            <div className="genz-paper paper-panel rounded-[2rem] p-6 text-center shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
-            <h2 className="text-lg font-black text-slate-950">No orders yet</h2>
+          <div className="rounded-lg bg-white p-6 text-center shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900">No orders yet</h2>
 
-            <p className="mt-2 text-sm font-semibold text-slate-700">
+            <p className="mt-2 text-sm text-gray-500">
               Once you place a COD order, it will appear here.
             </p>
 
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="mt-5 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white shadow-[0_14px_26px_rgba(15,23,42,0.16)]"
+              className="mt-5 rounded-lg bg-black px-5 py-3 font-semibold text-white"
             >
               Continue Shopping
             </button>
-            </div>
           </div>
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <article key={order.id} className="genz-paper paper-panel rounded-[2rem] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
-                <div className="flex flex-col gap-3 border-b border-slate-900/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
+              <article key={order.id} className="rounded-lg bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="genz-kicker text-slate-700">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
                       Order ID
                     </p>
 
-                    <h2 className="mt-1 text-lg font-black text-slate-950">
+                    <h2 className="mt-1 text-lg font-bold text-gray-900">
                       {order.code}
                     </h2>
 
-                    <p className="mt-2 text-sm font-semibold text-slate-700">
+                    <p className="mt-2 text-sm text-gray-500">
                       Placed on {formatDate(order.createdAt)}
                     </p>
 
-                    <p className="mt-1 text-sm font-semibold text-slate-700">
+                    <p className="mt-1 text-sm text-gray-500">
                       Estimated delivery by {formatDate(order.estimatedDelivery)}
                     </p>
                   </div>
