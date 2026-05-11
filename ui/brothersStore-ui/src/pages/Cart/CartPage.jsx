@@ -82,7 +82,8 @@ export default function CartPage() {
   const [successOrder, setSuccessOrder] = useState(null);
   const [addressFormDirty, setAddressFormDirty] = useState(false);
   const [paymentMode, setPaymentMode] = useState("cod");
-  const [pricingPreview, setPricingPreview] = useState(null);
+  const [codPricingPreview, setCodPricingPreview] = useState(null);
+  const [prepaidPricingPreview, setPrepaidPricingPreview] = useState(null);
   const autoSaveTimeoutRef = useRef(null);
   const keepAddressFormOpenRef = useRef(savedAddresses.length === 0);
   const cartPricingKey = cart
@@ -100,30 +101,40 @@ export default function CartPage() {
 
   useEffect(() => {
     if (!isAuthenticated || cart.length === 0) {
-      setPricingPreview(null);
+      setCodPricingPreview(null);
+      setPrepaidPricingPreview(null);
       return;
     }
 
     let ignore = false;
-    const paymentMethod =
-      paymentMode === "prepaid" ? "Prepaid (Razorpay UPI)" : "Cash on Delivery";
+    const codRequest = getCartPricingPreview({
+      token,
+      paymentMethod: "Cash on Delivery",
+    });
+    const prepaidRequest = getCartPricingPreview({
+      token,
+      paymentMethod: "Prepaid (Razorpay UPI)",
+    });
 
-    getCartPricingPreview({ token, paymentMethod })
-      .then((data) => {
-        if (!ignore) {
-          setPricingPreview(data);
-        }
-      })
-      .catch(() => {
-        if (!ignore) {
-          setPricingPreview(null);
-        }
-      });
+    Promise.allSettled([codRequest, prepaidRequest]).then((results) => {
+      if (ignore) {
+        return;
+      }
+
+      const [codResult, prepaidResult] = results;
+      setCodPricingPreview(codResult.status === "fulfilled" ? codResult.value : null);
+      setPrepaidPricingPreview(
+        prepaidResult.status === "fulfilled" ? prepaidResult.value : null
+      );
+    });
 
     return () => {
       ignore = true;
     };
-  }, [cart.length, cartPricingKey, isAuthenticated, paymentMode, token]);
+  }, [cart.length, cartPricingKey, isAuthenticated, token]);
+
+  const pricingPreview = paymentMode === "prepaid" ? prepaidPricingPreview : codPricingPreview;
+  const prepaidOfferAmount = Number(prepaidPricingPreview?.prepaidDiscountAmount ?? 0);
 
   const originalTotalAmount = Number(pricingPreview?.originalTotalAmount ?? cartTotal);
   const firstOrderDiscountAmount = Number(pricingPreview?.firstOrderDiscountAmount ?? 0);
@@ -697,8 +708,8 @@ export default function CartPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-slate-900">Buy Now</p>
                       <p className="mt-0.5 text-xs font-medium text-emerald-700">
-                        {prepaidDiscountAmount > 0
-                          ? `Prepaid offer applied: save ${formatPrice(prepaidDiscountAmount)}`
+                        {prepaidOfferAmount > 0
+                          ? `Prepaid offer: save ${formatPrice(prepaidOfferAmount)}`
                           : "Pay online with Razorpay"}
                       </p>
                       <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-600">
@@ -846,8 +857,8 @@ export default function CartPage() {
                   <div className="flex items-center gap-2">
                     <FiTag className="shrink-0 text-slate-500" />
                     <span>
-                      {prepaidDiscountAmount > 0
-                        ? `Prepaid offer: save ${formatPrice(prepaidDiscountAmount)} on this order`
+                      {prepaidOfferAmount > 0
+                        ? `Prepaid offer: save ${formatPrice(prepaidOfferAmount)} on this order`
                         : "Prepaid offer will apply if available"}
                     </span>
                   </div>
