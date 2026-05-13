@@ -13,7 +13,7 @@ const normalizeBaseUrl = (value) => {
   return String(value).trim().replace(/\/+$/, "");
 };
 
-const MEDIA_BASE_URL =
+const RAW_MEDIA_BASE_URL =
   normalizeBaseUrl(import.meta.env.VITE_MEDIA_BASE_URL) ||
   (() => {
     const apiBase = String(import.meta.env.VITE_API_BASE_URL || "").trim();
@@ -26,6 +26,21 @@ const MEDIA_BASE_URL =
     }
   })();
 
+const getMediaBaseUrl = () => {
+  const base = RAW_MEDIA_BASE_URL;
+  if (!base) return "";
+
+  if (
+    typeof window !== "undefined" &&
+    window.location?.protocol === "https:" &&
+    base.startsWith("http://")
+  ) {
+    return `https://${base.slice("http://".length)}`;
+  }
+
+  return base;
+};
+
 export const resolveMediaUrl = (url) => {
   if (typeof url !== "string") return url;
   const trimmed = url.trim();
@@ -36,9 +51,10 @@ export const resolveMediaUrl = (url) => {
   }
 
   if (trimmed.startsWith("/media/") || trimmed.startsWith("media/")) {
-    if (!MEDIA_BASE_URL) return trimmed;
+    const mediaBase = getMediaBaseUrl();
+    if (!mediaBase) return trimmed;
     const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-    return `${MEDIA_BASE_URL}${path}`;
+    return `${mediaBase}${path}`;
   }
 
   return trimmed;
