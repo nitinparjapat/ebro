@@ -167,13 +167,16 @@ builder.Services.AddOptions<MediaOptions>()
 
         if (string.Equals(options.Mode, "supabase", StringComparison.OrdinalIgnoreCase))
         {
+            var key = options.SupabaseServiceRoleKey;
+            var looksLikeJwt = !string.IsNullOrWhiteSpace(key) && key.Count(c => c == '.') == 2;
             return !string.IsNullOrWhiteSpace(options.SupabaseProjectUrl)
                 && !string.IsNullOrWhiteSpace(options.SupabaseBucket)
-                && !string.IsNullOrWhiteSpace(options.SupabaseServiceRoleKey);
+                && !string.IsNullOrWhiteSpace(key)
+                && looksLikeJwt;
         }
 
         return true;
-    }, failureMessage: "Invalid Media configuration. Check Media:Mode and related settings (Bucket/SupabaseProjectUrl/SupabaseBucket/SupabaseServiceRoleKey).")
+    }, failureMessage: "Invalid Media configuration. Check Media:Mode and related settings. For Supabase, SupabaseServiceRoleKey must be the JWT-style service_role key (looks like 'eyJ...'; contains two '.'), not an 'sb_secret_...' key.")
     .ValidateOnStart();
 builder.Services.AddHttpClient<SupabaseObjectStorage>();
 builder.Services.AddScoped<IObjectStorage>(sp =>
