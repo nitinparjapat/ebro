@@ -8,6 +8,7 @@ public sealed class SupabaseObjectStorage : IObjectStorage
     private readonly string projectUrl;
     private readonly string bucket;
     private readonly string serviceRoleKey;
+    private readonly bool keyLooksLikeJwt;
 
     public SupabaseObjectStorage(IOptions<MediaOptions> options, HttpClient httpClient)
     {
@@ -21,6 +22,11 @@ public sealed class SupabaseObjectStorage : IObjectStorage
 
         serviceRoleKey = opts.SupabaseServiceRoleKey?.Trim()
             ?? throw new InvalidOperationException("Media:SupabaseServiceRoleKey must be set");
+
+        // Supabase now issues both JWT-style keys (legacy anon/service_role)
+        // and opaque "sb_secret_..." keys. Only JWTs should be sent as Bearer tokens,
+        // otherwise Supabase returns "Invalid Compact JWS".
+        keyLooksLikeJwt = serviceRoleKey.Count(c => c == '.') == 2;
 
         this.httpClient = httpClient;
     }
@@ -36,7 +42,11 @@ public sealed class SupabaseObjectStorage : IObjectStorage
 
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
 
-        request.Headers.Add("Authorization", $"Bearer {serviceRoleKey}");
+        request.Headers.Add("apikey", serviceRoleKey);
+        if (keyLooksLikeJwt)
+        {
+            request.Headers.Add("Authorization", $"Bearer {serviceRoleKey}");
+        }
         request.Headers.Add("x-upsert", "true");
         request.Headers.Add("cache-control", cacheControl);
 
@@ -64,7 +74,11 @@ public sealed class SupabaseObjectStorage : IObjectStorage
         var url = $"{projectUrl}/storage/v1/object/info/public/{bucket}/{objectName}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("Authorization", $"Bearer {serviceRoleKey}");
+        request.Headers.Add("apikey", serviceRoleKey);
+        if (keyLooksLikeJwt)
+        {
+            request.Headers.Add("Authorization", $"Bearer {serviceRoleKey}");
+        }
 
         var response = await httpClient.SendAsync(request, cancellationToken);
         return response.IsSuccessStatusCode;
