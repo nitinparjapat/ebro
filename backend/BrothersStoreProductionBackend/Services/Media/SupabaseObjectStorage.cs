@@ -86,9 +86,15 @@ public sealed class SupabaseObjectStorage : IObjectStorage
 
     public async Task<ObjectReadResult?> OpenReadAsync(string objectName, CancellationToken cancellationToken)
     {
-        var url = $"{projectUrl}/storage/v1/object/public/{bucket}/{objectName}";
+        // Use the authenticated object endpoint so this works for both public and private buckets.
+        var url = $"{projectUrl}/storage/v1/object/{bucket}/{objectName}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add("apikey", serviceRoleKey);
+        if (keyLooksLikeJwt)
+        {
+            request.Headers.Add("Authorization", $"Bearer {serviceRoleKey}");
+        }
 
         var response = await httpClient.SendAsync(
             request,
