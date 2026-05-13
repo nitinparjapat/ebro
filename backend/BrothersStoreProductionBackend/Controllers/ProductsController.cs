@@ -1,6 +1,7 @@
 using System.Text.Json;
 using BrothersStoreApi.Data;
 using BrothersStoreApi.Entities;
+using BrothersStoreApi.Services.Caching;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -30,7 +31,7 @@ public class ProductsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Get(int page = 1, int pageSize = 50, bool includeInactive = false)
     {
-        var cacheKey = BuildProductListCacheKey(page, pageSize, includeInactive);
+        var cacheKey = ProductCacheKeys.BuildList(page, pageSize, includeInactive);
         if (cache.TryGetValue(cacheKey, out List<ProductResponse>? cachedProducts) && cachedProducts != null)
         {
             return Ok(cachedProducts);
@@ -61,21 +62,29 @@ public class ProductsController : ControllerBase
                 product.VideosJson,
             })
             .ToListAsync();
+        var reviewSummaries = await GetReviewSummariesAsync(products.Select(product => product.Id).ToList());
 
-        var responses = products.Select(product => new ProductResponse
+        var responses = products.Select(product =>
         {
-            Id = product.Id,
-            Name = product.Name,
-            Description = product.Description,
-            OriginalPrice = product.OriginalPrice,
-            Price = product.Price,
-            Stock = product.Stock,
-            CategoryName = product.CategoryName,
-            IsActive = product.IsActive,
-            PrimaryImageUrl = BuildListImageUrl(product.PrimaryImageUrl),
-            Images = BuildListImages(product.PrimaryImageUrl),
-            Videos = [],
-            HasVideo = DeserializeMedia(product.VideosJson).Count > 0,
+            reviewSummaries.TryGetValue(product.Id, out var reviewSummary);
+
+            return new ProductResponse
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = string.Empty,
+                OriginalPrice = product.OriginalPrice,
+                Price = product.Price,
+                Stock = product.Stock,
+                CategoryName = product.CategoryName,
+                IsActive = product.IsActive,
+                PrimaryImageUrl = BuildListImageUrl(product.PrimaryImageUrl),
+                Images = BuildListImages(product.PrimaryImageUrl),
+                Videos = [],
+                HasVideo = HasVideo(product.VideosJson),
+                ReviewCount = reviewSummary?.ReviewCount ?? 0,
+                AverageRating = reviewSummary?.AverageRating ?? 0,
+            };
         }).ToList();
 
         cache.Set(cacheKey, responses, ProductListCacheDuration);
@@ -85,7 +94,7 @@ public class ProductsController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var cacheKey = BuildProductDetailCacheKey(id);
+        var cacheKey = ProductCacheKeys.BuildDetail(id);
         if (cache.TryGetValue(cacheKey, out ProductResponse? cachedProduct) && cachedProduct != null)
         {
             return Ok(cachedProduct);
@@ -98,7 +107,10 @@ public class ProductsController : ControllerBase
             return NotFound();
         }
 
-        var response = ToResponse(product, includeVideos: true);
+        var response = ToResponse(
+            product,
+            includeVideos: true,
+            await GetReviewSummaryAsync(id));
         cache.Set(cacheKey, response, ProductDetailCacheDuration);
         return Ok(response);
     }
@@ -119,7 +131,7 @@ public class ProductsController : ControllerBase
 
         db.Products.Add(product);
         await db.SaveChangesAsync();
-        InvalidateProductCache(product.Id);
+        ProductCacheKeys.Invalidate(cache, product.Id);
 
         return Ok(ToResponse(product, includeVideos: true));
     }
@@ -144,7 +156,7 @@ public class ProductsController : ControllerBase
 
         ApplyRequest(product, request);
         await db.SaveChangesAsync();
-        InvalidateProductCache(product.Id);
+        ProductCacheKeys.Invalidate(cache, product.Id);
 
         return Ok(ToResponse(product, includeVideos: true));
     }
@@ -174,7 +186,7 @@ public class ProductsController : ControllerBase
         }
 
         await db.SaveChangesAsync();
-        InvalidateProductCache(product.Id);
+        ProductCacheKeys.Invalidate(cache, product.Id);
 
         if (wasActive && !product.IsActive)
         {
@@ -200,7 +212,7 @@ public class ProductsController : ControllerBase
 
         db.Products.Remove(product);
         await db.SaveChangesAsync();
-        InvalidateProductCache(product.Id);
+        ProductCacheKeys.Invalidate(cache, product.Id);
 
         return NoContent();
     }
@@ -216,7 +228,7 @@ public class ProductsController : ControllerBase
             .ExecuteDeleteAsync();
     }
 
-    private static ProductResponse ToResponse(Product product, bool includeVideos)
+    private static ProductResponse ToResponse(Product product, bool includeVideos, ProductReviewSummary? reviewSummary = null)
     {
         var images = DeserializeMedia(product.ImagesJson);
         var videos = DeserializeMedia(product.VideosJson);
@@ -246,6 +258,8 @@ public class ProductsController : ControllerBase
             Images = images,
             Videos = includeVideos ? videos : [],
             HasVideo = videos.Count > 0,
+            ReviewCount = reviewSummary?.ReviewCount ?? 0,
+            AverageRating = reviewSummary?.AverageRating ?? 0,
         };
     }
 
@@ -364,18 +378,42 @@ public class ProductsController : ControllerBase
     private static string SerializeMedia(IEnumerable<string> media) =>
         JsonSerializer.Serialize(NormalizeMedia(media), JsonOptions);
 
-    private void InvalidateProductCache(int productId)
+    private async Task<Dictionary<int, ProductReviewSummary>> GetReviewSummariesAsync(List<int> productIds)
     {
-        cache.Remove(BuildProductDetailCacheKey(productId));
-        cache.Remove(BuildProductListCacheKey(1, 50, false));
-        cache.Remove(BuildProductListCacheKey(1, 50, true));
+        if (productIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await db.Reviews
+            .AsNoTracking()
+            .Where(review => productIds.Contains(review.ProductId) && review.Status == "Approved")
+            .GroupBy(review => review.ProductId)
+            .Select(group => new ProductReviewSummary
+            {
+                ProductId = group.Key,
+                ReviewCount = group.Count(),
+                AverageRating = group.Average(review => (double)review.Rating),
+            })
+            .ToDictionaryAsync(summary => summary.ProductId);
     }
 
-    private static string BuildProductListCacheKey(int page, int pageSize, bool includeInactive) =>
-        $"products:list:{page}:{pageSize}:{includeInactive}";
+    private Task<ProductReviewSummary?> GetReviewSummaryAsync(int productId) =>
+        db.Reviews
+            .AsNoTracking()
+            .Where(review => review.ProductId == productId && review.Status == "Approved")
+            .GroupBy(review => review.ProductId)
+            .Select(group => new ProductReviewSummary
+            {
+                ProductId = group.Key,
+                ReviewCount = group.Count(),
+                AverageRating = group.Average(review => (double)review.Rating),
+            })
+            .FirstOrDefaultAsync();
 
-    private static string BuildProductDetailCacheKey(int productId) =>
-        $"products:detail:{productId}";
+    private static bool HasVideo(string? videosJson) =>
+        !string.IsNullOrWhiteSpace(videosJson) &&
+        !string.Equals(videosJson.Trim(), "[]", StringComparison.Ordinal);
 }
 
 public class ProductUpsertRequest
@@ -412,4 +450,13 @@ public class ProductResponse
     public List<string> Images { get; set; } = [];
     public List<string> Videos { get; set; } = [];
     public bool HasVideo { get; set; }
+    public int ReviewCount { get; set; }
+    public double AverageRating { get; set; }
+}
+
+public sealed class ProductReviewSummary
+{
+    public int ProductId { get; set; }
+    public int ReviewCount { get; set; }
+    public double AverageRating { get; set; }
 }

@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using BrothersStoreApi.Data;
 using BrothersStoreApi.Entities;
+using BrothersStoreApi.Services.Caching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BrothersStoreApi.Controllers;
 
@@ -11,9 +13,10 @@ namespace BrothersStoreApi.Controllers;
 [Route("api/products/{productId}/reviews")]
 public class ReviewsController:ControllerBase{
 
-private readonly AppDbContext db;
-
-public ReviewsController(AppDbContext d){db=d;}
+ private readonly AppDbContext db;
+ private readonly IMemoryCache cache;
+ 
+ public ReviewsController(AppDbContext d, IMemoryCache cache){db=d; this.cache = cache;}
 
 [HttpGet]
 public async Task<IActionResult> Get(int productId){
@@ -59,10 +62,11 @@ var review = new Review
     CreatedAt = DateTime.UtcNow,
 };
 
-db.Reviews.Add(review);
-await db.SaveChangesAsync();
-return Ok(review);
-}
+ db.Reviews.Add(review);
+ await db.SaveChangesAsync();
+ ProductCacheKeys.Invalidate(cache, productId);
+ return Ok(review);
+ }
 }
 
 public class ReviewCreateRequest

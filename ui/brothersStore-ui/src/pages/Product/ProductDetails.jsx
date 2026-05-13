@@ -171,6 +171,8 @@ export default function ProductDetails() {
   const prepaidQuantity = Math.max(cartQuantity || 1, 1);
 
   const approvedReviews = getApprovedReviewsForProduct(productId);
+  const approvedReviewCount =
+    approvedReviews.length > 0 ? approvedReviews.length : product?.reviewCount ?? 0;
   const discountPercent = product
     ? product.discountPercent || getDiscountPercent(product.oldPrice, product.price)
     : 0;
@@ -481,8 +483,8 @@ export default function ProductDetails() {
           <Rating rating={product.rating} />
 
           <p className="text-gray-500">
-            {approvedReviews.length} approved review
-            {approvedReviews.length === 1 ? "" : "s"}
+            {approvedReviewCount} approved review
+            {approvedReviewCount === 1 ? "" : "s"}
           </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">

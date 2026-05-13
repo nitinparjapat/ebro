@@ -216,6 +216,10 @@ namespace BrothersStoreApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryName");
+
+                    b.HasIndex("IsActive");
+
                     b.ToTable("Products");
                 });
 
@@ -289,6 +293,8 @@ namespace BrothersStoreApi.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProductId", "Status", "ApprovedAt");
 
                     b.ToTable("Reviews");
                 });

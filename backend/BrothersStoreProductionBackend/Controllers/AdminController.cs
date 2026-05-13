@@ -2,10 +2,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BrothersStoreApi.Data;
 using BrothersStoreApi.Entities;
+using BrothersStoreApi.Services.Caching;
 using BrothersStoreApi.Services;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BrothersStoreApi.Controllers;
 
@@ -20,11 +22,13 @@ namespace BrothersStoreApi.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly AppDbContext db;
+    private readonly IMemoryCache cache;
     private readonly IOrderEmailNotificationService orderEmailNotificationService;
 
-    public AdminController(AppDbContext d, IOrderEmailNotificationService orderEmailNotificationService)
+    public AdminController(AppDbContext d, IMemoryCache cache, IOrderEmailNotificationService orderEmailNotificationService)
     {
         db = d;
+        this.cache = cache;
         this.orderEmailNotificationService = orderEmailNotificationService;
     }
 
@@ -144,6 +148,7 @@ public class AdminController : ControllerBase
         review.Status = "Approved";
         review.ApprovedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+        ProductCacheKeys.Invalidate(cache, review.ProductId);
 
         return Ok(new { message = "Review approved", review });
     }
@@ -162,6 +167,7 @@ public class AdminController : ControllerBase
 
         review.Status = "Rejected";
         await db.SaveChangesAsync();
+        ProductCacheKeys.Invalidate(cache, review.ProductId);
 
         return Ok(new { message = "Review rejected", review });
     }

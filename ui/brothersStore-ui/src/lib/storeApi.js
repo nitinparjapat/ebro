@@ -47,6 +47,12 @@ export const getDiscountPercent = (originalPrice, finalPrice) => {
 export const normalizeProduct = (product) => {
   const price = toNumber(product?.price);
   const originalPrice = toNumber(product?.originalPrice || product?.oldPrice || price);
+  const reviewCount = toNumber(product?.reviewCount);
+  const averageRatingRaw = Number(product?.averageRating ?? 0);
+  const averageRating =
+    Number.isFinite(averageRatingRaw) && averageRatingRaw > 0
+      ? Number(averageRatingRaw.toFixed(1))
+      : 0;
   const images = product?.images?.length
     ? sanitizeImages(product.images)
     : sanitizeImages([product?.primaryImageUrl]);
@@ -61,8 +67,10 @@ export const normalizeProduct = (product) => {
     originalPrice,
     oldPrice: originalPrice,
     discountPercent,
-    rating: Number((4 + ((product?.id ?? 1) % 5) * 0.14).toFixed(1)),
-    reviews: 45 + (product?.id ?? 1) * 13,
+    rating: averageRating,
+    reviews: reviewCount,
+    reviewCount,
+    averageRating,
     category: product?.categoryName ?? "Uncategorized",
     categoryId: product?.categoryId ?? 0,
     stock: product?.stock ?? 0,
