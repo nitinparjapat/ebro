@@ -443,7 +443,6 @@ export default function OwnerDashboard() {
         const { data } = await apiClient.post("media/images", formData, {
           headers: {
             ...createAuthHeaders(token),
-            "Content-Type": "multipart/form-data",
           },
         });
         if (!data?.url) {
