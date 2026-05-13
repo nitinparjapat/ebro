@@ -46,7 +46,19 @@ export const resolveMediaUrl = (url) => {
   const trimmed = url.trim();
   if (!trimmed) return trimmed;
 
-  if (/^(data:|https?:\/\/)/i.test(trimmed)) {
+  if (/^data:/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    if (
+      typeof window !== "undefined" &&
+      window.location?.protocol === "https:" &&
+      trimmed.startsWith("http://")
+    ) {
+      return `https://${trimmed.slice("http://".length)}`;
+    }
+
     return trimmed;
   }
 
