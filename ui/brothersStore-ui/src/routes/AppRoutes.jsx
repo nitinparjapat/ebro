@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ScrollToTop from "./ScrollToTop";
 
 const Home = lazy(() => import("../pages/Home/Home"));
 const ProductDetails = lazy(() => import("../pages/Product/ProductDetails"));
@@ -15,6 +16,7 @@ export default function AppRoutes(){
   return(
 
     <BrowserRouter>
+      <ScrollToTop />
 
       <Suspense
         fallback={
