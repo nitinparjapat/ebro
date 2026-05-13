@@ -7,6 +7,7 @@ import { useCart } from "../../context/CartContext";
 import { useProducts } from "../../context/ProductsContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { getDiscountPercent } from "../../lib/storeApi";
+import { buildImageSrcSet } from "../../lib/imageUrls";
 import Rating from "../common/Rating";
 
 const LOADING_PRODUCT_IMAGE =
@@ -46,6 +47,7 @@ function ProductCard({ product }) {
   );
   const image = images[0];
   const hasRealImage = Boolean(image) && !String(image).startsWith("data:image/svg+xml");
+  const srcSet = buildImageSrcSet(image);
   const goToDetails = () => {
     if (!productId) {
       return;
@@ -192,6 +194,8 @@ function ProductCard({ product }) {
       <div className="relative overflow-hidden">
         <img
           src={isImageHydrating && !hasRealImage ? LOADING_PRODUCT_IMAGE : images[activeImageIndex] || image}
+          srcSet={activeImageIndex === 0 ? srcSet : undefined}
+          sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 80vw"
           alt={product.title}
           onClick={goToDetails}
           loading="lazy"

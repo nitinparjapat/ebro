@@ -86,6 +86,12 @@ public class ProductsController : ControllerBase
     [EnableRateLimiting("write")]
     public async Task<IActionResult> Create([FromBody] ProductUpsertRequest request)
     {
+        var inlineError = ValidateNoInlineMedia(request);
+        if (inlineError != null)
+        {
+            return inlineError;
+        }
+
         var product = new Product();
         ApplyRequest(product, request);
 
@@ -105,6 +111,12 @@ public class ProductsController : ControllerBase
         if (product == null)
         {
             return NotFound();
+        }
+
+        var inlineError = ValidateNoInlineMedia(request);
+        if (inlineError != null)
+        {
+            return inlineError;
         }
 
         ApplyRequest(product, request);
@@ -283,6 +295,28 @@ public class ProductsController : ControllerBase
             .Distinct(StringComparer.Ordinal)
             .Cast<string>()
             .ToList();
+
+    private static IActionResult? ValidateNoInlineMedia(ProductUpsertRequest request)
+    {
+        if (IsInlineDataUri(request.PrimaryImageUrl))
+        {
+            return new BadRequestObjectResult(new { message = "Inline base64 images are not supported. Upload images and store the returned URL instead." });
+        }
+
+        foreach (var image in request.Images ?? [])
+        {
+            if (IsInlineDataUri(image))
+            {
+                return new BadRequestObjectResult(new { message = "Inline base64 images are not supported. Upload images and store the returned URL instead." });
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsInlineDataUri(string? value) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.TrimStart().StartsWith("data:", StringComparison.OrdinalIgnoreCase);
 
     private static List<string> DeserializeMedia(string? json)
     {

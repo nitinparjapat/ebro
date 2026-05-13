@@ -61,6 +61,8 @@ export default function AboutPage() {
             <img
               src="/bs_logo_hd.png"
               alt="BrothersStore"
+              loading="eager"
+              decoding="async"
               className="w-64 max-w-full self-center object-contain"
             />
 

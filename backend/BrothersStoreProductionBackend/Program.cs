@@ -10,6 +10,7 @@ using Serilog;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
+using BrothersStoreApi.Services.Media;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -146,6 +147,15 @@ builder.Services.Configure<AdminNotificationOptions>(builder.Configuration.GetSe
 builder.Services.Configure<PublicSiteOptions>(builder.Configuration.GetSection("PublicSite"));
 builder.Services.Configure<RazorpayOptions>(builder.Configuration.GetSection("Razorpay"));
 builder.Services.AddScoped<IOrderEmailNotificationService, OrderEmailNotificationService>();
+builder.Services.Configure<MediaOptions>(builder.Configuration.GetSection("Media"));
+builder.Services.AddSingleton<IObjectStorage>(sp =>
+{
+    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaOptions>>().Value;
+    return string.Equals(options.Mode, "gcs", StringComparison.OrdinalIgnoreCase)
+        ? new GcsObjectStorage(sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaOptions>>())
+        : new LocalObjectStorage(sp.GetRequiredService<IWebHostEnvironment>(), sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaOptions>>());
+});
+builder.Services.AddScoped<ImageUploadService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"] ?? "your-secret-key-min-32-characters-long!");
@@ -225,7 +235,16 @@ app.Use(async (context, next) =>
 
 app.UseHttpsRedirection();
 app.UseResponseCompression();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        if (ctx.Context.Request.Path.StartsWithSegments("/_media"))
+        {
+            ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
+        }
+    }
+});
 app.UseRouting();
 app.UseCors("vite");
 

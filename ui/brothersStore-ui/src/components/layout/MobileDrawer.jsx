@@ -49,6 +49,8 @@ export default function MobileDrawer({ open, setOpen }) {
           <img
             src="/bs_logo_hd.png"
             alt="BrothersStore"
+            loading="eager"
+            decoding="async"
             className="block w-44 max-w-[70%] object-contain"
           />
 

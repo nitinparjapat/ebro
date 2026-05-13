@@ -12,6 +12,7 @@ import Navbar from "../../components/layout/Navbar";
 import { useAuth } from "../../context/AuthContext";
 import { useOrders } from "../../context/OrdersContext";
 import { useProducts } from "../../context/ProductsContext";
+import { buildImageSrcSet } from "../../lib/imageUrls";
 
 const formatPrice = (amount) => `Rs. ${amount.toLocaleString("en-IN")}`;
 
@@ -231,6 +232,10 @@ export default function TrackOrderPage() {
                       <img
                         src={image}
                         alt={item.title}
+                        srcSet={buildImageSrcSet(image)}
+                        sizes="80px"
+                        loading="lazy"
+                        decoding="async"
                         className="h-20 w-20 shrink-0 rounded-lg object-cover"
                       />
                     )}

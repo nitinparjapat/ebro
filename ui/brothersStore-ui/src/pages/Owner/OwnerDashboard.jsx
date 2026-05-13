@@ -437,14 +437,32 @@ export default function OwnerDashboard() {
         return;
       }
 
+      const uploadImageFile = async (file) => {
+        const formData = new FormData();
+        formData.append("file", file, file.name);
+        const { data } = await apiClient.post("media/images", formData, {
+          headers: {
+            ...createAuthHeaders(token),
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        if (!data?.url) {
+          throw new Error("Image upload failed.");
+        }
+        return data.url;
+      };
+
       const readMediaItems = (mediaFiles, mediaType) =>
         Promise.all(
           mediaFiles.map(async (file) => ({
-          id: `${mediaType}-${file.name}-${file.lastModified}`,
-          name: file.name,
-          type: file.type,
-          src: await readFileAsDataUrl(file),
-        }))
+            id: `${mediaType}-${file.name}-${file.lastModified}`,
+            name: file.name,
+            type: file.type,
+            src:
+              mediaType === "image"
+                ? await uploadImageFile(file)
+                : await readFileAsDataUrl(file),
+          }))
         );
 
       const [imageItems, videoItems] = await Promise.all([
@@ -459,8 +477,8 @@ export default function OwnerDashboard() {
       }));
       setDashboardError("");
       setDashboardMessage("");
-    } catch {
-      setDashboardError("Unable to read selected media files.");
+    } catch (mediaError) {
+      setDashboardError(mediaError?.message || "Unable to process selected media files.");
     }
   };
 

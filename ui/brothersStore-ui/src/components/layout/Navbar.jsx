@@ -79,6 +79,8 @@ export default function Navbar() {
             <img
               src="/bs_logo_hd.png"
               alt="BrothersStore"
+              loading="eager"
+              decoding="async"
               className="block w-40 max-w-[46vw] object-contain sm:w-52"
             />
           </button>

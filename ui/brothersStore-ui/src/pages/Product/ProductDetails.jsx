@@ -22,6 +22,7 @@ import { useReviews } from "../../context/ReviewsContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { getPrepaidOfferPreview } from "../../lib/razorpay";
 import { getDiscountPercent } from "../../lib/storeApi";
+import { buildImageSrcSet } from "../../lib/imageUrls";
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -359,7 +360,12 @@ export default function ProductDetails() {
             ) : (
               <img
                 src={currentMedia?.src}
+                srcSet={buildImageSrcSet(currentMedia?.src)}
+                sizes="(min-width: 1024px) 40vw, 92vw"
                 alt={product.title}
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
                 className="aspect-[4/4] w-full object-cover"
               />
             )}
@@ -410,7 +416,11 @@ export default function ProductDetails() {
                   ) : (
                     <img
                       src={media.src}
+                      srcSet={buildImageSrcSet(media.src)}
+                      sizes="80px"
                       alt={`${product.title} image ${index + 1}`}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover"
                     />
                   )}

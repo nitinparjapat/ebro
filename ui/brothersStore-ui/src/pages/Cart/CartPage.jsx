@@ -21,6 +21,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
 import { useProducts } from "../../context/ProductsContext";
+import { buildImageSrcSet } from "../../lib/imageUrls";
 import {
   createRazorpayOrder,
   getCartPricingPreview,
@@ -646,6 +647,10 @@ export default function CartPage() {
                         <img
                           src={image}
                           alt={item.title}
+                          srcSet={buildImageSrcSet(image)}
+                          sizes="96px"
+                          loading="lazy"
+                          decoding="async"
                           className="h-24 w-24 shrink-0 rounded-lg object-cover"
                         />
                       )}
