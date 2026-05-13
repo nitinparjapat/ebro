@@ -24,6 +24,43 @@ import { getPrepaidOfferPreview } from "../../lib/razorpay";
 import { getDiscountPercent } from "../../lib/storeApi";
 import { buildImageSrcSet } from "../../lib/imageUrls";
 
+const scheduleNonCriticalLoad = (callback) => {
+  if (typeof window === "undefined") {
+    callback();
+    return () => {};
+  }
+
+  let cancelled = false;
+  let timeoutId;
+  let idleId;
+
+  const runCallback = () => {
+    timeoutId = window.setTimeout(() => {
+      if (!cancelled) {
+        callback();
+      }
+    }, 150);
+  };
+
+  if (typeof window.requestIdleCallback === "function") {
+    idleId = window.requestIdleCallback(runCallback, { timeout: 1200 });
+  } else {
+    runCallback();
+  }
+
+  return () => {
+    cancelled = true;
+
+    if (typeof idleId === "number" && typeof window.cancelIdleCallback === "function") {
+      window.cancelIdleCallback(idleId);
+    }
+
+    if (typeof timeoutId === "number") {
+      window.clearTimeout(timeoutId);
+    }
+  };
+};
+
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -103,8 +140,12 @@ export default function ProductDetails() {
       return;
     }
 
-    loadApprovedReviewsForProduct(productId).catch(() => {
+    const cancelScheduledLoad = scheduleNonCriticalLoad(() => {
+      loadApprovedReviewsForProduct(productId).catch(() => {
+      });
     });
+
+    return cancelScheduledLoad;
   }, [loadApprovedReviewsForProduct, productId]);
 
   const productCategory = product?.category;
@@ -141,24 +182,26 @@ export default function ProductDetails() {
     }
 
     let ignore = false;
-
-    getPrepaidOfferPreview({
-      productId: currentProductId,
-      quantity: prepaidQuantity,
-    })
-      .then((data) => {
-        if (!ignore) {
-          setPrepaidOffer(data);
-        }
+    const cancelScheduledLoad = scheduleNonCriticalLoad(() => {
+      getPrepaidOfferPreview({
+        productId: currentProductId,
+        quantity: prepaidQuantity,
       })
-      .catch(() => {
-        if (!ignore) {
-          setPrepaidOffer(null);
-        }
-      });
+        .then((data) => {
+          if (!ignore) {
+            setPrepaidOffer(data);
+          }
+        })
+        .catch(() => {
+          if (!ignore) {
+            setPrepaidOffer(null);
+          }
+        });
+    });
 
     return () => {
       ignore = true;
+      cancelScheduledLoad();
     };
   }, [currentProductId, prepaidQuantity]);
 

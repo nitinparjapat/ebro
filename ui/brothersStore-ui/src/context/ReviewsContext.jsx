@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -31,6 +32,7 @@ export function ReviewsProvider({ children }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const pendingApprovedReviewLoadsRef = useRef({});
 
   const refreshReviews = useCallback(async () => {
     setLoading(true);
@@ -54,24 +56,47 @@ export function ReviewsProvider({ children }) {
   }, [token]);
 
   const loadApprovedReviewsForProduct = useCallback(async (productId) => {
+    const existingApprovedReviews = reviews.filter(
+      (review) =>
+        String(review.productId) === String(productId) &&
+        review.status === "approved"
+    );
+
+    if (existingApprovedReviews.length > 0) {
+      return existingApprovedReviews;
+    }
+
+    const pendingApprovedReviewLoad = pendingApprovedReviewLoadsRef.current[productId];
+    if (pendingApprovedReviewLoad) {
+      return pendingApprovedReviewLoad;
+    }
+
     try {
-      const { data } = await apiClient.get(`/products/${productId}/reviews`);
-      const approvedProductReviews = Array.isArray(data)
-        ? data.map(normalizeReview)
-        : [];
+      const approvedReviewLoadPromise = apiClient.get(`/products/${productId}/reviews`)
+        .then(({ data }) => {
+          const approvedProductReviews = Array.isArray(data)
+            ? data.map(normalizeReview)
+            : [];
 
-      setReviews((currentReviews) => {
-        const otherReviews = currentReviews.filter(
-          (review) =>
-            String(review.productId) !== String(productId) ||
-            review.status !== "approved"
-        );
+          setReviews((currentReviews) => {
+            const otherReviews = currentReviews.filter(
+              (review) =>
+                String(review.productId) !== String(productId) ||
+                review.status !== "approved"
+            );
 
-        return [...otherReviews, ...approvedProductReviews];
-      });
-      setError("");
+            return [...otherReviews, ...approvedProductReviews];
+          });
+          setError("");
 
-      return approvedProductReviews;
+          return approvedProductReviews;
+        })
+        .finally(() => {
+          delete pendingApprovedReviewLoadsRef.current[productId];
+        });
+
+      pendingApprovedReviewLoadsRef.current[productId] = approvedReviewLoadPromise;
+      return await approvedReviewLoadPromise;
     } catch (apiError) {
       const message = getApiErrorMessage(
         apiError,
@@ -80,7 +105,7 @@ export function ReviewsProvider({ children }) {
       setError(message);
       throw new Error(message, { cause: apiError });
     }
-  }, []);
+  }, [reviews]);
 
   useEffect(() => {
     if (!token || !isAdmin) {
