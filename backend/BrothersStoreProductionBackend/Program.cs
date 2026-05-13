@@ -233,7 +233,11 @@ using (var scope = app.Services.CreateScope())
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    // Cloud Run sits behind Google Frontend proxies. Trust forwarded headers so Request.Scheme is correct
+    // (used when generating absolute URLs like uploaded media links).
+    KnownNetworks = { },
+    KnownProxies = { },
 });
 
 if (!app.Environment.IsDevelopment())
