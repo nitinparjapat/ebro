@@ -19,8 +19,10 @@ public class MediaController : ControllerBase
     [Authorize(Roles = "Admin")]
     [EnableRateLimiting("write")]
     [RequestSizeLimit(15 * 1024 * 1024)]
-    public async Task<IActionResult> UploadImage([FromForm] IFormFile file, CancellationToken cancellationToken)
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile? file, CancellationToken cancellationToken)
     {
+        file ??= Request.Form?.Files?.FirstOrDefault();
+
         if (file == null)
         {
             return BadRequest(new { message = "file is required." });
