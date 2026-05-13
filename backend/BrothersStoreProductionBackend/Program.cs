@@ -148,7 +148,33 @@ builder.Services.Configure<AdminNotificationOptions>(builder.Configuration.GetSe
 builder.Services.Configure<PublicSiteOptions>(builder.Configuration.GetSection("PublicSite"));
 builder.Services.Configure<RazorpayOptions>(builder.Configuration.GetSection("Razorpay"));
 builder.Services.AddScoped<IOrderEmailNotificationService, OrderEmailNotificationService>();
-builder.Services.Configure<MediaOptions>(builder.Configuration.GetSection("Media"));
+builder.Services.AddOptions<MediaOptions>()
+    .Bind(builder.Configuration.GetSection("Media"))
+    .PostConfigure(options =>
+    {
+        options.SupabaseProjectUrl ??= Environment.GetEnvironmentVariable("SUPABASE_URL")
+            ?? Environment.GetEnvironmentVariable("SUPABASE_PROJECT_URL");
+
+        options.SupabaseServiceRoleKey ??= Environment.GetEnvironmentVariable("SUPABASE_SERVICE_ROLE_KEY");
+        options.SupabaseBucket ??= Environment.GetEnvironmentVariable("SUPABASE_BUCKET");
+    })
+    .Validate(options =>
+    {
+        if (string.Equals(options.Mode, "gcs", StringComparison.OrdinalIgnoreCase))
+        {
+            return !string.IsNullOrWhiteSpace(options.Bucket);
+        }
+
+        if (string.Equals(options.Mode, "supabase", StringComparison.OrdinalIgnoreCase))
+        {
+            return !string.IsNullOrWhiteSpace(options.SupabaseProjectUrl)
+                && !string.IsNullOrWhiteSpace(options.SupabaseBucket)
+                && !string.IsNullOrWhiteSpace(options.SupabaseServiceRoleKey);
+        }
+
+        return true;
+    }, failureMessage: "Invalid Media configuration. Check Media:Mode and related settings (Bucket/SupabaseProjectUrl/SupabaseBucket/SupabaseServiceRoleKey).")
+    .ValidateOnStart();
 builder.Services.AddHttpClient<SupabaseObjectStorage>();
 builder.Services.AddScoped<IObjectStorage>(sp =>
 {
