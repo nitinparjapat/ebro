@@ -50,12 +50,13 @@ public class MediaController : ControllerBase
         }
 
         var accept = Request.Headers.Accept.ToString();
-        await using var result = await imageUploadService.OpenVariantAsync(id.Trim(), w, accept, cancellationToken);
+        var result = await imageUploadService.OpenVariantAsync(id.Trim(), w, accept, cancellationToken);
         if (result == null)
         {
             return NotFound();
         }
 
+        HttpContext.Response.RegisterForDisposeAsync(result);
         Response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
         Response.Headers["Vary"] = "Accept";
 
