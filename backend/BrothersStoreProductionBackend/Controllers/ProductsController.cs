@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BrothersStoreApi.Controllers;
 
@@ -14,17 +15,27 @@ public class ProductsController : ControllerBase
 {
     private const int MaxInlineListImageLength = 80_000;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly TimeSpan ProductListCacheDuration = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan ProductDetailCacheDuration = TimeSpan.FromMinutes(5);
 
     private readonly AppDbContext db;
+    private readonly IMemoryCache cache;
 
-    public ProductsController(AppDbContext d)
+    public ProductsController(AppDbContext d, IMemoryCache cache)
     {
         db = d;
+        this.cache = cache;
     }
 
     [HttpGet]
     public async Task<IActionResult> Get(int page = 1, int pageSize = 50, bool includeInactive = false)
     {
+        var cacheKey = BuildProductListCacheKey(page, pageSize, includeInactive);
+        if (cache.TryGetValue(cacheKey, out List<ProductResponse>? cachedProducts) && cachedProducts != null)
+        {
+            return Ok(cachedProducts);
+        }
+
         var query = db.Products.AsNoTracking().AsQueryable();
 
         if (!includeInactive)
@@ -51,7 +62,7 @@ public class ProductsController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(products.Select(product => new ProductResponse
+        var responses = products.Select(product => new ProductResponse
         {
             Id = product.Id,
             Name = product.Name,
@@ -65,12 +76,21 @@ public class ProductsController : ControllerBase
             Images = BuildListImages(product.PrimaryImageUrl),
             Videos = [],
             HasVideo = DeserializeMedia(product.VideosJson).Count > 0,
-        }));
+        }).ToList();
+
+        cache.Set(cacheKey, responses, ProductListCacheDuration);
+        return Ok(responses);
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
+        var cacheKey = BuildProductDetailCacheKey(id);
+        if (cache.TryGetValue(cacheKey, out ProductResponse? cachedProduct) && cachedProduct != null)
+        {
+            return Ok(cachedProduct);
+        }
+
         var product = await db.Products.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id);
 
         if (product == null)
@@ -78,7 +98,9 @@ public class ProductsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(ToResponse(product, includeVideos: true));
+        var response = ToResponse(product, includeVideos: true);
+        cache.Set(cacheKey, response, ProductDetailCacheDuration);
+        return Ok(response);
     }
 
     [HttpPost]
@@ -97,6 +119,7 @@ public class ProductsController : ControllerBase
 
         db.Products.Add(product);
         await db.SaveChangesAsync();
+        InvalidateProductCache(product.Id);
 
         return Ok(ToResponse(product, includeVideos: true));
     }
@@ -121,6 +144,7 @@ public class ProductsController : ControllerBase
 
         ApplyRequest(product, request);
         await db.SaveChangesAsync();
+        InvalidateProductCache(product.Id);
 
         return Ok(ToResponse(product, includeVideos: true));
     }
@@ -150,6 +174,7 @@ public class ProductsController : ControllerBase
         }
 
         await db.SaveChangesAsync();
+        InvalidateProductCache(product.Id);
 
         if (wasActive && !product.IsActive)
         {
@@ -175,6 +200,7 @@ public class ProductsController : ControllerBase
 
         db.Products.Remove(product);
         await db.SaveChangesAsync();
+        InvalidateProductCache(product.Id);
 
         return NoContent();
     }
@@ -337,6 +363,19 @@ public class ProductsController : ControllerBase
 
     private static string SerializeMedia(IEnumerable<string> media) =>
         JsonSerializer.Serialize(NormalizeMedia(media), JsonOptions);
+
+    private void InvalidateProductCache(int productId)
+    {
+        cache.Remove(BuildProductDetailCacheKey(productId));
+        cache.Remove(BuildProductListCacheKey(1, 50, false));
+        cache.Remove(BuildProductListCacheKey(1, 50, true));
+    }
+
+    private static string BuildProductListCacheKey(int page, int pageSize, bool includeInactive) =>
+        $"products:list:{page}:{pageSize}:{includeInactive}";
+
+    private static string BuildProductDetailCacheKey(int productId) =>
+        $"products:detail:{productId}";
 }
 
 public class ProductUpsertRequest
