@@ -1,4 +1,5 @@
 import axios from "axios";
+import { resolveMediaUrl } from "./imageUrls";
 
 const DEFAULT_PRODUCT_IMAGE =
   "data:image/svg+xml;utf8," +
@@ -22,7 +23,10 @@ const toNumber = (value) => Number(value ?? 0);
 
 const sanitizeImages = (images) => {
   const list = Array.isArray(images) ? images : [];
-  const filtered = list.filter(Boolean);
+  const filtered = list
+    .filter(Boolean)
+    .map((image) => resolveMediaUrl(image))
+    .filter(Boolean);
 
   return filtered.length > 0 ? filtered : [DEFAULT_PRODUCT_IMAGE];
 };
