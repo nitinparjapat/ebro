@@ -51,7 +51,7 @@ export default function AboutPage() {
 
               <p className="mt-4 text-base text-gray-600">
                 BrothersStore is a mobile-first ecommerce experience focused on
-                home decos and everyday essentials. We keep the shopping flow
+                home decor and everyday essentials. We keep the shopping flow
                 simple, clean, and practical so customers can quickly find what
                 they want and order with confidence.
               </p>

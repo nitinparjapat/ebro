@@ -30,7 +30,7 @@ export default function HeroBanner() {
             <div className="mt-3 flex flex-wrap items-center gap-2 md:mt-5 md:gap-3">
               <button
                 type="button"
-                onClick={() => navigate("/?category=Home Decos")}
+                onClick={() => navigate("/?category=Home decor")}
                 className="rounded-2xl bg-slate-950 px-5 py-2.5 text-sm font-black text-white shadow-[0_14px_24px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-800 md:px-6 md:py-3"
               >
                 Explore Home Decor

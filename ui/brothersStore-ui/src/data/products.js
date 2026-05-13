@@ -2,7 +2,7 @@ const products = [
   {
     id: 1,
     title: "Wooden Wall Shelf",
-    category: "Home Decos",
+    category: "Home decor",
     price: 799,
     oldPrice: 1199,
     rating: 4.3,
