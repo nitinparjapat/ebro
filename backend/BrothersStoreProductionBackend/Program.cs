@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Security.Claims;
@@ -148,13 +149,26 @@ builder.Services.Configure<PublicSiteOptions>(builder.Configuration.GetSection("
 builder.Services.Configure<RazorpayOptions>(builder.Configuration.GetSection("Razorpay"));
 builder.Services.AddScoped<IOrderEmailNotificationService, OrderEmailNotificationService>();
 builder.Services.Configure<MediaOptions>(builder.Configuration.GetSection("Media"));
-builder.Services.AddSingleton<IObjectStorage>(sp =>
+builder.Services.AddHttpClient<SupabaseObjectStorage>();
+builder.Services.AddScoped<IObjectStorage>(sp =>
 {
-    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaOptions>>().Value;
-    return string.Equals(options.Mode, "gcs", StringComparison.OrdinalIgnoreCase)
-        ? new GcsObjectStorage(sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaOptions>>())
-        : new LocalObjectStorage(sp.GetRequiredService<IWebHostEnvironment>(), sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaOptions>>());
+    var options = sp.GetRequiredService<IOptions<MediaOptions>>().Value;
+
+    if (string.Equals(options.Mode, "gcs", StringComparison.OrdinalIgnoreCase))
+    {
+        return new GcsObjectStorage(sp.GetRequiredService<IOptions<MediaOptions>>());
+    }
+
+    if (string.Equals(options.Mode, "supabase", StringComparison.OrdinalIgnoreCase))
+    {
+        return sp.GetRequiredService<SupabaseObjectStorage>();
+    }
+
+    return new LocalObjectStorage(
+        sp.GetRequiredService<IWebHostEnvironment>(),
+        sp.GetRequiredService<IOptions<MediaOptions>>());
 });
+
 builder.Services.AddScoped<ImageUploadService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
