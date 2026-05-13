@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -25,6 +26,7 @@ export function ProductsProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const pendingProductLoadsRef = useRef({});
 
   const refreshProducts = useCallback(async () => {
     setLoading(true);
@@ -61,14 +63,7 @@ export function ProductsProvider({ children }) {
 
     const loadProducts = async () => {
       try {
-        const normalizedProducts = await refreshProducts();
-
-        if (ignore) {
-          return;
-        }
-
-        setProducts(normalizedProducts);
-        setError("");
+        await refreshProducts();
       } catch (apiError) {
         if (ignore) {
           return;
@@ -95,25 +90,38 @@ export function ProductsProvider({ children }) {
       return cachedProduct;
     }
 
+    const pendingProductLoad = pendingProductLoadsRef.current[productId];
+    if (pendingProductLoad) {
+      return pendingProductLoad;
+    }
+
     try {
-      const { data } = await apiClient.get(`/products/${productId}`);
-      const normalizedProduct = normalizeProduct(data);
+      const productLoadPromise = apiClient.get(`/products/${productId}`)
+        .then(({ data }) => {
+          const normalizedProduct = normalizeProduct(data);
 
-      setProductDetails((currentDetails) => ({
-        ...currentDetails,
-        [productId]: normalizedProduct,
-      }));
-      setProducts((currentProducts) =>
-        currentProducts.some((product) => product.id === normalizedProduct.id)
-          ? currentProducts.map((product) =>
-              product.id === normalizedProduct.id
-                ? { ...product, ...normalizedProduct }
-                : product
-            )
-          : [...currentProducts, normalizedProduct]
-      );
+          setProductDetails((currentDetails) => ({
+            ...currentDetails,
+            [productId]: normalizedProduct,
+          }));
+          setProducts((currentProducts) =>
+            currentProducts.some((product) => product.id === normalizedProduct.id)
+              ? currentProducts.map((product) =>
+                  product.id === normalizedProduct.id
+                    ? { ...product, ...normalizedProduct }
+                    : product
+                )
+              : [...currentProducts, normalizedProduct]
+          );
 
-      return normalizedProduct;
+          return normalizedProduct;
+        })
+        .finally(() => {
+          delete pendingProductLoadsRef.current[productId];
+        });
+
+      pendingProductLoadsRef.current[productId] = productLoadPromise;
+      return await productLoadPromise;
     } catch (apiError) {
       throw new Error(
         getApiErrorMessage(apiError, "Unable to load this product."),
