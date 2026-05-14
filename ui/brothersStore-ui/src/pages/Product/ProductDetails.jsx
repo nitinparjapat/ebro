@@ -507,7 +507,7 @@ export default function ProductDetails() {
           <div className="mt-4 space-y-2 text-sm font-medium text-slate-600">
             <div className="flex items-center gap-2">
               <FiTruck className="shrink-0 text-slate-500" />
-              <span>FREE Shipping &amp; Delivery in 2–3 Days</span>
+              <span>FREE Shipping &amp; Delivery in 5–7 Days</span>
             </div>
             <div className="flex items-center gap-2">
               <FiShield className="shrink-0 text-slate-500" />
