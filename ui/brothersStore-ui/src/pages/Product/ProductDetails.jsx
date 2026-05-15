@@ -503,13 +503,14 @@ export default function ProductDetails() {
               </>
             )}
           </div>
-<div className="flex items-center gap-2">
-              <FiTag className="shrink-0 text-slate-500" />
-              <span>
-               "COD- Cash on delivery available"
-              </span>
-            </div>
           <div className="mt-4 space-y-2 text-sm font-medium text-slate-600">
+
+<div className="flex items-center gap-2">
+              <FiTruck className="shrink-0 text-slate-500" />
+              <span>COD- Cash on delivery available</span>
+            </div>
+
+
             <div className="flex items-center gap-2">
               <FiTruck className="shrink-0 text-slate-500" />
               <span>FREE Shipping &amp; Delivery in 5–7 Days</span>
